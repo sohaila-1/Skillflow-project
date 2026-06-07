@@ -1,0 +1,7 @@
+project_id     = "skillflow-prod"
+region         = "europe-west1"
+environment    = "prod"
+backend_image  = "docker.io/YOUR_ORG/skillflow-backend:latest"
+worker_image   = "docker.io/YOUR_ORG/skillflow-worker:latest"
+frontend_image = "docker.io/YOUR_ORG/skillflow-frontend:latest"
+keycloak_url   = "https://auth.skillflow.example.com"

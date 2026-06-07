@@ -1,0 +1,92 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16.3-alpine
+    container_name: skillflow-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-skillflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skillflow}
+      POSTGRES_DB: ${POSTGRES_DB:-skillflow}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: skillflow-keycloak
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-skillflow}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-skillflow}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  pubsub-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    container_name: skillflow-pubsub
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
+    ports:
+      - "8085:8085"
+
+  backend:
+    build:
+      context: ./backend
+      target: development
+    container_name: skillflow-backend
+    ports:
+      - "3000:3000"
+    env_file: ./backend/.env
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      pubsub-emulator:
+        condition: service_started
+
+  worker:
+    build:
+      context: ./worker
+      target: development
+    container_name: skillflow-worker
+    env_file: ./worker/.env
+    volumes:
+      - ./worker:/app
+      - /app/node_modules
+    depends_on:
+      pubsub-emulator:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: skillflow-frontend
+    ports:
+      - "4000:4000"
+    env_file: ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
