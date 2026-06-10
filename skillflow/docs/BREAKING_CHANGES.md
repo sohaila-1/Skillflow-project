@@ -1,0 +1,46 @@
+# Gestion des Breaking Changes
+
+## Stratégie
+
+SkillFlow utilise le **versionning URI** pour gérer les breaking changes côté backend sans impact sur le frontend en production.
+
+- Version courante : `/v1/...`
+- Nouvelle version : `/v2/...`
+- Les deux versions coexistent dans le même déploiement backend.
+
+## Procédure lors d'une Breaking Change
+
+### 1. Créer la nouvelle version de la route
+
+```typescript
+// Ancienne route
+@Controller({ path: 'courses', version: '1' })
+export class CoursesV1Controller { ... }
+
+// Nouvelle route (breaking change)
+@Controller({ path: 'courses', version: '2' })
+export class CoursesV2Controller { ... }
+```
+
+### 2. Rédiger un ADR
+
+Documenter la décision dans `docs/adr/XXX-breaking-change-<description>.md`.
+
+### 3. Déployer le backend
+
+Le backend est déployé **une seule fois** avec les deux versions. Le frontend continue d'utiliser `/v1`.
+
+### 4. Mettre à jour le frontend
+
+Une PR frontend migre les appels de `/v1` vers `/v2`. Une fois mergée et déployée, `/v1` peut être dépréciée.
+
+### 5. Déprécier l'ancienne version
+
+Après confirmation que plus aucun client n'utilise `/v1`, supprimer le contrôleur V1.
+
+## Exemple de démonstration (rendu final)
+
+La route `GET /v1/courses/:id` retourne `{ title, description }`.  
+La route `GET /v2/courses/:id` retourne `{ title, description, instructorName, lessonsCount }`.
+
+Le frontend peut être déployé en version v1 ou v2 sans redéploiement du backend.
