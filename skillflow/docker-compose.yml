@@ -9,9 +9,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skillflow}
       POSTGRES_DB: ${POSTGRES_DB:-skillflow}
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U skillflow"]
       interval: 10s
@@ -34,6 +35,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: skillflow-mailpit
+    ports:
+      - "1025:1025"   # SMTP — Keycloak sends emails here
+      - "8025:8025"   # Web UI — view captured emails at http://localhost:8025
 
   pubsub-emulator:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators

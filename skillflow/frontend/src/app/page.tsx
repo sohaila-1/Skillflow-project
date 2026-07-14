@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AuthNavActions from '../components/AuthNavActions'
 
 const COURSES = [
   {
@@ -160,18 +161,7 @@ export default function HomePage() {
             <Link href="/dashboard" className="nav-link" style={{ color: 'var(--text-secondary)', fontSize: 15, fontWeight: 500 }}>For Business</Link>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <Link href="/auth/login" className="nav-link" style={{
-              padding: '8px 16px',
-              color: 'var(--text-secondary)',
-              fontSize: 14, fontWeight: 500,
-            }}>Log in</Link>
-            <Link href="/auth/register" className="btn-primary" style={{
-              padding: '9px 20px', borderRadius: 'var(--radius)',
-              background: 'var(--accent)', color: '#fff',
-              fontSize: 14, fontWeight: 600,
-            }}>Join for Free</Link>
-          </div>
+          <AuthNavActions />
         </div>
       </nav>
 

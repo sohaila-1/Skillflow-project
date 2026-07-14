@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoursesModule } from '@modules/courses/courses.module';
@@ -6,8 +8,11 @@ import { UsersModule } from '@modules/users/users.module';
 import { QuizzesModule } from '@modules/quizzes/quizzes.module';
 import { CertificatesModule } from '@modules/certificates/certificates.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { CorrelationIdMiddleware } from './shared/middleware/correlation-id.middleware';
+import { JwtAuthGuard } from './shared/guards/jwt-auth.guard';
 
 @Module({
+  controllers: [AppController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
@@ -26,5 +31,17 @@ import { AuthModule } from '@modules/auth/auth.module';
     QuizzesModule,
     CertificatesModule,
   ],
+  providers: [
+    // JwtAuthGuard global : toutes les routes nécessitent un token JWT
+    // sauf celles décorées avec @Public()
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

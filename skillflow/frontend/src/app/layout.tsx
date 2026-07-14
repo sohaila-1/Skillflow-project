@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { KeycloakProvider } from '../providers/keycloak-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -9,13 +10,14 @@ export const metadata: Metadata = {
   },
   description:
     'Learn from industry experts with hands-on projects, interactive quizzes, and personalized feedback that accelerates your growth.',
-  keywords: ['online learning', 'courses', 'programming', 'design', 'skills'],
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <KeycloakProvider>{children}</KeycloakProvider>
+      </body>
     </html>
   )
 }
