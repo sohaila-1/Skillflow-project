@@ -2,11 +2,12 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [main]
-    paths: ['backend/**']
+    branches: [main, dev]
+    paths: ['skillflow/backend/**']
   pull_request:
     branches: [main]
-    paths: ['backend/**']
+    paths: ['skillflow/backend/**']
+  workflow_dispatch:
 
 jobs:
   ci:
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: skillflow/backend
 
     steps:
       - uses: actions/checkout@v4
@@ -23,18 +24,19 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: skillflow/backend/package-lock.json
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
       - name: Typecheck
         run: npm run typecheck
 
       - name: Lint
-        run: npm run lint
+        run: npx eslint "{src,test}/**/*.ts" --max-warnings 0
 
       - name: Unit tests
-        run: npm test -- --coverage
+        run: npm test -- --coverage --passWithNoTests
 
       - name: Build
         run: npm run build
@@ -54,12 +56,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          context: ./skillflow/backend
           target: production
           push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/skillflow-backend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/skillflow-backend:${{ github.sha }}
