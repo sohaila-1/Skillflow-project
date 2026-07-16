@@ -7,6 +7,7 @@ import { CoursesModule } from '@modules/courses/courses.module';
 import { UsersModule } from '@modules/users/users.module';
 import { QuizzesModule } from '@modules/quizzes/quizzes.module';
 import { CertificatesModule } from '@modules/certificates/certificates.module';
+import { EnrollmentsModule } from '@modules/enrollments/enrollments.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CorrelationIdMiddleware } from './shared/middleware/correlation-id.middleware';
 import { JwtAuthGuard } from './shared/guards/jwt-auth.guard';
@@ -27,6 +28,7 @@ import { JwtAuthGuard } from './shared/guards/jwt-auth.guard';
     }),
     AuthModule,
     CoursesModule,
+    EnrollmentsModule,
     UsersModule,
     QuizzesModule,
     CertificatesModule,
