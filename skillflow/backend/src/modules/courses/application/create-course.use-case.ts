@@ -17,6 +17,9 @@ export class CreateCourseUseCase {
     course.title = dto.title;
     course.description = dto.description;
     course.instructorId = instructorId;
+    course.category = dto.category ?? 'General';
+    course.level = dto.level ?? 'Beginner';
+    course.sections = dto.sections ?? [];
     course.published = dto.published ?? false;
     return this.repo.save(course);
   }

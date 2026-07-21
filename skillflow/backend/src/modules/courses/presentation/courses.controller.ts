@@ -3,6 +3,7 @@ import {
   Body, Param, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Roles } from '@shared/decorators/roles.decorator';
 import { CreateCourseUseCase } from '../application/create-course.use-case';
 import { ListCoursesUseCase } from '../application/list-courses.use-case';
 import { GetCourseUseCase } from '../application/get-course.use-case';
@@ -40,6 +41,7 @@ export class CoursesController {
   }
 
   @Post()
+  @Roles('instructor', 'admin')
   async create(@Body() dto: CreateCourseDto, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.createCourse.execute(dto, user.sub);
     if (result.isErr()) throw result.error;
@@ -47,6 +49,7 @@ export class CoursesController {
   }
 
   @Patch(':id')
+  @Roles('instructor', 'admin')
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateCourseDto,
@@ -59,6 +62,7 @@ export class CoursesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles('instructor', 'admin')
   async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const result = await this.deleteCourse.execute(id, user.sub);
     if (result.isErr()) throw result.error;

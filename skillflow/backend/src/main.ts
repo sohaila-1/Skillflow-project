@@ -9,6 +9,8 @@ async function bootstrap(): Promise<void> {
     bufferLogs: true,
   });
 
+  app.enableCors({ origin: ['http://localhost:4000', 'http://localhost:3000'], credentials: true })
+
   // API Versioning — supports breaking changes without frontend impact
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
@@ -25,14 +27,34 @@ async function bootstrap(): Promise<void> {
   );
 
   // Swagger docs
+  const keycloakBase = 'http://localhost:8080/realms/skillflow/protocol/openid-connect';
   const config = new DocumentBuilder()
     .setTitle('SkillFlow API')
     .setDescription('API de la plateforme SkillFlow')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addOAuth2({
+      type: 'oauth2',
+      flows: {
+        authorizationCode: {
+          authorizationUrl: `${keycloakBase}/auth`,
+          tokenUrl: `${keycloakBase}/token`,
+          scopes: { openid: 'OpenID', profile: 'Profile', email: 'Email' },
+        },
+      },
+    }, 'keycloak')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      oauth2RedirectUrl: 'http://localhost:3000/docs/oauth2-redirect.html',
+      initOAuth: {
+        clientId: 'skillflow-frontend',
+        scopes: ['openid', 'profile', 'email'],
+        usePkceWithAuthorizationCodeGrant: true,
+      },
+      persistAuthorization: true,
+    },
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

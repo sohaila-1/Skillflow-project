@@ -1,10 +1,14 @@
 import Keycloak from 'keycloak-js'
 
-// Singleton — une seule instance partagée dans toute l'app
-const keycloak = new Keycloak({
-  url: process.env.NEXT_PUBLIC_KEYCLOAK_URL!,
-  realm: process.env.NEXT_PUBLIC_KEYCLOAK_REALM!,
-  clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID!,
-})
+let instance: Keycloak | null = null
 
-export default keycloak
+export function getKeycloak(): Keycloak {
+  if (!instance) {
+    instance = new Keycloak({
+      url: process.env.NEXT_PUBLIC_KEYCLOAK_URL!,
+      realm: process.env.NEXT_PUBLIC_KEYCLOAK_REALM!,
+      clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID!,
+    })
+  }
+  return instance
+}

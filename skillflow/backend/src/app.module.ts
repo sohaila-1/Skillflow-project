@@ -1,6 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, Reflector } from '@nestjs/core';
+import { RolesGuard } from './shared/guards/roles.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoursesModule } from '@modules/courses/courses.module';
@@ -34,12 +35,9 @@ import { JwtAuthGuard } from './shared/guards/jwt-auth.guard';
     CertificatesModule,
   ],
   providers: [
-    // JwtAuthGuard global : toutes les routes nécessitent un token JWT
-    // sauf celles décorées avec @Public()
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
+    Reflector,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule implements NestModule {

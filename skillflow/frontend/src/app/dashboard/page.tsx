@@ -1,40 +1,29 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useKeycloak } from '../../providers/keycloak-provider'
 import { useRequireAuth } from '../../hooks/useRequireAuth'
+import { apiFetch } from '../../lib/api'
 
-const ENROLLED_COURSES = [
-  {
-    id: '1', title: 'Complete Web Development Bootcamp', instructor: 'Alex Rivera',
-    progress: 68, totalLessons: 186, completedLessons: 126,
-    bandColor: '#0056D2', emoji: '💻', timeLeft: '14 hours',
-  },
-  {
-    id: '2', title: 'Machine Learning Fundamentals', instructor: 'Dr. Sarah Chen',
-    progress: 32, totalLessons: 124, completedLessons: 40,
-    bandColor: '#16A34A', emoji: '🤖', timeLeft: '26 hours',
-  },
-  {
-    id: '3', title: 'UI/UX Design Masterclass', instructor: 'Maya Johnson',
-    progress: 100, totalLessons: 98, completedLessons: 98,
-    bandColor: '#D97706', emoji: '🎨', timeLeft: '0 hours',
-  },
-]
+interface Enrollment {
+  id: string
+  courseId: string
+  enrolledAt: string
+}
 
-const STATS = [
-  { label: 'Enrolled Courses', value: '3',   icon: '📚', color: 'var(--accent)',  bg: 'var(--accent-dim)' },
-  { label: 'Completed',        value: '1',   icon: '✅', color: 'var(--green)',   bg: 'var(--green-dim)' },
-  { label: 'Hours Learned',    value: '127', icon: '⏱',  color: 'var(--orange)',  bg: 'var(--orange-dim)' },
-  { label: 'Certificates',     value: '2',   icon: '🏆', color: '#7C3AED',        bg: '#F5F3FF' },
-]
+interface Course {
+  id: string
+  title: string
+  description: string
+  category: string
+  level: string
+}
 
-const ACTIVITY = [
-  { text: 'Completed lesson "DOM Manipulation"',     time: '2 hours ago',  icon: '✅', color: 'var(--green)' },
-  { text: 'Scored 85% on JavaScript Quiz',           time: '1 day ago',    icon: '🎯', color: 'var(--accent)' },
-  { text: 'Started "Machine Learning Fundamentals"', time: '3 days ago',   icon: '🚀', color: 'var(--orange)' },
-  { text: 'Earned UI/UX Design Certificate',         time: '1 week ago',   icon: '🏆', color: '#7C3AED' },
-]
+const BAND_COLORS: Record<string, string> = {
+  'Web Dev': '#0056D2', 'AI & ML': '#16A34A', 'Design': '#D97706',
+  'Backend': '#7C3AED', 'DevOps': '#DC2626', 'General': '#0891B2',
+}
 
 function Spinner() {
   return (
@@ -52,6 +41,23 @@ function Spinner() {
 export default function DashboardPage() {
   const { isLoading } = useRequireAuth()
   const { user, logout } = useKeycloak()
+  const isInstructor = user?.roles?.includes('instructor') || user?.roles?.includes('admin')
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([])
+  const [courses, setCourses]         = useState<Record<string, Course>>({})
+
+  useEffect(() => {
+    apiFetch<Enrollment[]>('/enrollments/me').then(async data => {
+      setEnrollments(data)
+      const courseMap: Record<string, Course> = {}
+      await Promise.all(data.map(async e => {
+        try {
+          const c = await apiFetch<Course>(`/courses/${e.courseId}`)
+          courseMap[e.courseId] = c
+        } catch {}
+      }))
+      setCourses(courseMap)
+    }).catch(() => {})
+  }, [])
 
   if (isLoading) return <Spinner />
 
@@ -106,6 +112,17 @@ export default function DashboardPage() {
             <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, color: 'var(--text)' }}>
               {displayName} 👋
             </h1>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              {(user?.roles ?? []).filter(r => ['student','instructor','admin'].includes(r)).map(r => (
+                <span key={r} style={{
+                  fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100,
+                  background: r === 'admin' ? '#FEF3C7' : r === 'instructor' ? 'var(--accent-dim)' : 'var(--green-dim)',
+                  color: r === 'admin' ? '#92400E' : r === 'instructor' ? 'var(--accent)' : 'var(--green)',
+                  border: `1px solid ${r === 'admin' ? '#FDE68A' : r === 'instructor' ? '#BFDBFE' : '#BBF7D0'}`,
+                  textTransform: 'capitalize',
+                }}>{r}</span>
+              ))}
+            </div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--green-dim)', border: '1px solid #BBF7D0', borderRadius: 100, padding: '4px 12px' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
@@ -127,12 +144,13 @@ export default function DashboardPage() {
 
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
-          {STATS.map(s => (
-            <div key={s.label} className="card-hover" style={{
-              background: 'var(--bg)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)', padding: '20px',
-              boxShadow: 'var(--shadow-sm)',
-            }}>
+          {[
+            { label: 'Enrolled Courses', value: enrollments.length.toString(), icon: '📚', color: 'var(--accent)', bg: 'var(--accent-dim)' },
+            { label: 'Certificates',     value: '0',                           icon: '🏆', color: '#7C3AED',       bg: '#F5F3FF' },
+            { label: 'Hours Learned',    value: '0',                           icon: '⏱',  color: 'var(--orange)', bg: 'var(--orange-dim)' },
+            { label: 'Completed',        value: '0',                           icon: '✅', color: 'var(--green)',  bg: 'var(--green-dim)' },
+          ].map(s => (
+            <div key={s.label} className="card-hover" style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px', boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ width: 42, height: 42, borderRadius: 'var(--radius)', background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, marginBottom: 14 }}>{s.icon}</div>
               <div style={{ fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-heading)', color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{s.label}</div>
@@ -149,52 +167,38 @@ export default function DashboardPage() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>My Courses</h2>
-                <Link href="/courses" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Browse more →</Link>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  {isInstructor && (
+                    <Link href="/courses/new" style={{ fontSize: 13, color: '#fff', fontWeight: 600, background: 'var(--accent)', padding: '6px 14px', borderRadius: 'var(--radius)', textDecoration: 'none' }}>+ Create Course</Link>
+                  )}
+                  <Link href="/courses" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Browse →</Link>
+                </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {ENROLLED_COURSES.map(c => (
-                  <div key={c.id} className="card-hover" style={{
-                    background: 'var(--bg)', border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)', padding: '20px 22px', boxShadow: 'var(--shadow-sm)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                      <div style={{ width: 48, height: 48, borderRadius: 'var(--radius)', background: c.bandColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{c.emoji}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
-                          <h3 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3, color: 'var(--text)' }}>{c.title}</h3>
-                          <span style={{
-                            background: c.progress === 100 ? 'var(--green-dim)' : 'var(--bg-subtle)',
-                            color: c.progress === 100 ? 'var(--green)' : 'var(--text-secondary)',
-                            fontSize: 11, fontWeight: 700, padding: '3px 10px',
-                            borderRadius: 100, flexShrink: 0,
-                            border: `1px solid ${c.progress === 100 ? '#BBF7D0' : 'var(--border)'}`,
-                          }}>
-                            {c.progress === 100 ? '✓ Done' : `${c.progress}%`}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>by {c.instructor}</div>
-                        <div style={{ height: 5, background: 'var(--bg-subtle)', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
-                          <div style={{ height: '100%', borderRadius: 3, width: `${c.progress}%`, background: c.progress === 100 ? 'var(--green)' : c.bandColor }} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                            {c.completedLessons}/{c.totalLessons} lessons{c.progress < 100 && <> · {c.timeLeft} left</>}
-                          </span>
-                          {c.progress < 100 ? (
-                            <Link href={`/courses/${c.id}`} style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
-                              </svg>
-                              Continue
-                            </Link>
-                          ) : (
-                            <Link href={`/courses/${c.id}/quiz`} style={{ fontSize: 12, color: 'var(--green)', fontWeight: 700 }}>Take Quiz →</Link>
-                          )}
+                {enrollments.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ fontSize: 36, marginBottom: 12 }}>📚</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>No courses yet</div>
+                    <Link href="/courses" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 14 }}>Browse courses →</Link>
+                  </div>
+                ) : enrollments.map(e => {
+                  const c = courses[e.courseId]
+                  const color = BAND_COLORS[c?.category ?? ''] ?? '#0891B2'
+                  return (
+                    <div key={e.id} className="card-hover" style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px 22px', boxShadow: 'var(--shadow-sm)' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 'var(--radius)', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>📚</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3, color: 'var(--text)', marginBottom: 4 }}>{c?.title ?? 'Loading…'}</h3>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>{c?.category} · {c?.level}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            Enrolled {new Date(e.enrolledAt).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -234,28 +238,20 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            {/* Recent activity */}
-            <div style={{
-              background: 'var(--bg)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)', padding: '22px', boxShadow: 'var(--shadow-sm)',
-            }}>
+            {/* Recent enrollments */}
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '22px', boxShadow: 'var(--shadow-sm)' }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 18, color: 'var(--text)' }}>Recent Activity</h3>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {ACTIVITY.map((a, i) => (
-                  <div key={i} style={{
-                    display: 'flex', gap: 12, alignItems: 'flex-start',
-                    paddingBottom: i < ACTIVITY.length - 1 ? 16 : 0,
-                    marginBottom: i < ACTIVITY.length - 1 ? 16 : 0,
-                    borderBottom: i < ACTIVITY.length - 1 ? '1px solid var(--border)' : 'none',
-                  }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>{a.icon}</div>
-                    <div>
-                      <div style={{ fontSize: 13, lineHeight: 1.45, marginBottom: 2, color: 'var(--text)' }}>{a.text}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{a.time}</div>
-                    </div>
+              {enrollments.length === 0 ? (
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No activity yet</div>
+              ) : enrollments.slice(0, 4).map((e, i) => (
+                <div key={e.id} style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: i < 3 ? 14 : 0, marginBottom: i < 3 ? 14 : 0, borderBottom: i < 3 ? '1px solid var(--border)' : 'none' }}>
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>🚀</div>
+                  <div>
+                    <div style={{ fontSize: 13, color: 'var(--text)' }}>Enrolled in <strong>{courses[e.courseId]?.title ?? '…'}</strong></div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(e.enrolledAt).toLocaleDateString()}</div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
 
             {/* Quick actions */}

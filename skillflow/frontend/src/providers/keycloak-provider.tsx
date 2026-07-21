@@ -8,7 +8,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react'
-import keycloak from '../lib/keycloak'
+import { getKeycloak } from '../lib/keycloak'
 
 interface KeycloakUser {
   sub: string
@@ -49,6 +49,8 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
     if (initialized.current) return
     initialized.current = true
 
+    const keycloak = getKeycloak()
+
     keycloak
       .init({
         onLoad: 'check-sso',
@@ -81,9 +83,9 @@ export function KeycloakProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         user,
         token,
-        login:    () => keycloak.login({ redirectUri: window.location.origin + '/dashboard' }),
-        register: () => keycloak.register({ redirectUri: window.location.origin + '/dashboard' }),
-        logout:   () => keycloak.logout({ redirectUri: window.location.origin }),
+        login:    () => getKeycloak().login({ redirectUri: window.location.origin + '/dashboard' }),
+        register: () => getKeycloak().register({ redirectUri: window.location.origin + '/dashboard' }),
+        logout:   () => getKeycloak().logout({ redirectUri: window.location.origin }),
       }}
     >
       {children}

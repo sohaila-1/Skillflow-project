@@ -1,4 +1,4 @@
-import keycloak from './keycloak'
+import { getKeycloak } from './keycloak'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/v1'
 
@@ -6,15 +6,16 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  if (keycloak.isTokenExpired?.(30)) {
-    await keycloak.updateToken(30).catch(() => keycloak.logout())
+  const kc = getKeycloak()
+  if (kc.isTokenExpired?.(30)) {
+    await kc.updateToken(30).catch(() => kc.logout())
   }
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(keycloak.token ? { Authorization: `Bearer ${keycloak.token}` } : {}),
+      ...(kc.token ? { Authorization: `Bearer ${kc.token}` } : {}),
       ...(options.headers as Record<string, string> ?? {}),
     },
   })
