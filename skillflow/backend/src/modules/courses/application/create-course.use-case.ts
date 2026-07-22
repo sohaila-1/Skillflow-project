@@ -19,7 +19,10 @@ export class CreateCourseUseCase {
     course.instructorId = instructorId;
     course.category = dto.category ?? 'General';
     course.level = dto.level ?? 'Beginner';
-    course.sections = dto.sections ?? [];
+    course.sections = (dto.sections ?? []).map(s => ({
+      title: s.title,
+      lessons: (s.lessons ?? []).map(l => ({ title: l.title, duration: l.duration ?? '10 min', content: l.content ?? '' })),
+    }));
     course.published = dto.published ?? false;
     return this.repo.save(course);
   }

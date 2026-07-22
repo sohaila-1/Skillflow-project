@@ -18,8 +18,17 @@ variable "environment" {
   }
 }
 
-variable "backend_image"  { type = string }
-variable "worker_image"   { type = string }
-variable "frontend_image" { type = string }
-variable "database_url"   { type = string; sensitive = true }
-variable "keycloak_url"   { type = string }
+variable "db_password" {
+  description = "PostgreSQL password"
+  type        = string
+  sensitive   = true
+}
+
+variable "keycloak_url" {
+  description = "Keycloak base URL"
+  type        = string
+}
+
+variable "backend_image"  { type = string; description = "Backend Docker image URL" }
+variable "worker_image"   { type = string; description = "Worker Docker image URL" }
+variable "frontend_image" { type = string; description = "Frontend Docker image URL" }

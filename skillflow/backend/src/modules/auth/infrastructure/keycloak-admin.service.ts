@@ -139,6 +139,101 @@ export class KeycloakAdminService {
     }
   }
 
+  async listUsers(max = 100): Promise<KeycloakUser[]> {
+    const res = await this.adminFetch(`/users?max=${max}`);
+    if (!res.ok) throw new InternalServerErrorException('Failed to list users from Keycloak');
+    return res.json() as Promise<KeycloakUser[]>;
+  }
+
+  async getRealmRole(roleName: string): Promise<{ id: string; name: string } | null> {
+    const res = await this.adminFetch(`/roles/${encodeURIComponent(roleName)}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new InternalServerErrorException(`Failed to get role ${roleName}`);
+    return res.json() as Promise<{ id: string; name: string }>;
+  }
+
+  async ensureRealmRole(roleName: string): Promise<{ id: string; name: string }> {
+    const existing = await this.getRealmRole(roleName);
+    if (existing) return existing;
+    const createRes = await this.adminFetch('/roles', {
+      method: 'POST',
+      body: JSON.stringify({ name: roleName }),
+    });
+    if (!createRes.ok && createRes.status !== 409) {
+      throw new InternalServerErrorException(`Failed to create role ${roleName}`);
+    }
+    return (await this.getRealmRole(roleName))!;
+  }
+
+  async getUserRealmRoles(userId: string): Promise<{ id: string; name: string }[]> {
+    const res = await this.adminFetch(`/users/${userId}/role-mappings/realm`);
+    if (!res.ok) throw new InternalServerErrorException('Failed to get user roles');
+    return res.json() as Promise<{ id: string; name: string }[]>;
+  }
+
+  async assignRealmRole(userId: string, roleName: string): Promise<void> {
+    const role = await this.ensureRealmRole(roleName);
+    const res = await this.adminFetch(`/users/${userId}/role-mappings/realm`, {
+      method: 'POST',
+      body: JSON.stringify([role]),
+    });
+    if (!res.ok) throw new InternalServerErrorException(`Failed to assign role ${roleName}`);
+  }
+
+  async removeRealmRole(userId: string, roleName: string): Promise<void> {
+    const role = await this.getRealmRole(roleName);
+    if (!role) return;
+    const res = await this.adminFetch(`/users/${userId}/role-mappings/realm`, {
+      method: 'DELETE',
+      body: JSON.stringify([role]),
+    });
+    if (!res.ok) throw new InternalServerErrorException(`Failed to remove role ${roleName}`);
+  }
+
+  async updateUserProfile(
+    userId: string,
+    updates: { firstName?: string; lastName?: string },
+  ): Promise<void> {
+    const res = await this.adminFetch(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      this.logger.error(`Update user profile failed: ${res.status} — ${text}`);
+      throw new InternalServerErrorException('Failed to update profile');
+    }
+  }
+
+  async verifyPassword(username: string, password: string): Promise<boolean> {
+    const url = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`;
+    const body = new URLSearchParams({
+      grant_type: 'password',
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      username,
+      password,
+    });
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    return res.ok;
+  }
+
+  async resetPassword(userId: string, newPassword: string): Promise<void> {
+    const res = await this.adminFetch(`/users/${userId}/reset-password`, {
+      method: 'PUT',
+      body: JSON.stringify({ type: 'password', value: newPassword, temporary: false }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      this.logger.error(`Reset password failed: ${res.status} — ${text}`);
+      throw new InternalServerErrorException('Failed to reset password');
+    }
+  }
+
   async introspectToken(token: string): Promise<TokenIntrospection> {
     const url = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token/introspect`;
     const body = new URLSearchParams({

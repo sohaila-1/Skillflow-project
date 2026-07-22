@@ -14,6 +14,9 @@ export class User {
   @Column({ name: 'display_name', length: 200, nullable: true })
   displayName!: string;
 
+  @Column({ name: 'avatar_url', type: 'text', nullable: true })
+  avatarUrl!: string | null;
+
   @Column({ type: 'simple-array', default: '' })
   roles!: string[];
 

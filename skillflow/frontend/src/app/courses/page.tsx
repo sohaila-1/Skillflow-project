@@ -24,7 +24,7 @@ const BAND_COLORS: Record<string, string> = {
 const LEVELS = ['All', 'Beginner', 'Intermediate', 'Advanced']
 
 export default function CoursesPage() {
-  const { isAuthenticated } = useKeycloak()
+  const { isAuthenticated, user } = useKeycloak()
   const [courses, setCourses]         = useState<Course[]>([])
   const [loading, setLoading]         = useState(true)
   const [search, setSearch]           = useState('')
@@ -35,8 +35,9 @@ export default function CoursesPage() {
   const [message, setMessage]         = useState<{ text: string; ok: boolean } | null>(null)
 
   useEffect(() => {
-    apiFetch<Course[]>('/courses')
-      .then(data => setCourses(data.filter(c => c.published)))
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`)
+      .then(r => r.json())
+      .then((data: Course[]) => setCourses(data.filter(c => c.published)))
       .catch(() => setCourses([]))
       .finally(() => setLoading(false))
   }, [])
@@ -180,28 +181,49 @@ export default function CoursesPage() {
                 const color = BAND_COLORS[course.category] ?? '#0891B2'
                 const isEnrolled = enrolled.has(course.id)
                 return (
-                  <div key={course.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ height: 100, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 'var(--radius)', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📚</div>
-                    </div>
-                    <div style={{ padding: '16px 18px 18px' }}>
+                  <div key={course.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column' }}>
+                    <Link href={`/courses/${course.id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{ height: 100, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: 'var(--radius)', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📚</div>
+                      </div>
+                    </Link>
+                    <div style={{ padding: '16px 18px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'inline-block', background: 'var(--bg-subtle)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 100, marginBottom: 10 }}>{course.category}</div>
-                      <h3 style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.4, marginBottom: 5, color: 'var(--text)' }}>{course.title}</h3>
+                      <Link href={`/courses/${course.id}`} style={{ textDecoration: 'none' }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.4, marginBottom: 5, color: 'var(--text)' }}>{course.title}</h3>
+                      </Link>
                       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{course.description}</p>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 14 }}>{course.level}</div>
-                      <button
-                        onClick={() => handleEnroll(course.id)}
-                        disabled={isEnrolled || enrolling === course.id}
-                        style={{
-                          width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)',
-                          background: isEnrolled ? 'var(--green-dim)' : 'var(--accent)',
-                          color: isEnrolled ? 'var(--green)' : '#fff',
-                          border: isEnrolled ? '1px solid #BBF7D0' : 'none',
-                          fontSize: 13, fontWeight: 600, cursor: isEnrolled ? 'default' : 'pointer',
-                        }}
-                      >
-                        {enrolling === course.id ? 'Enrolling…' : isEnrolled ? '✓ Enrolled' : 'Enroll'}
-                      </button>
+                      <div style={{ marginTop: 'auto', display: 'flex', gap: 8 }}>
+                        {course.instructorId === user?.sub ? (
+                          <>
+                            <Link href={`/courses/${course.id}/edit`} style={{
+                              flex: 1, padding: '8px', borderRadius: 'var(--radius-sm)', textAlign: 'center',
+                              background: 'var(--accent-dim)', color: 'var(--accent)',
+                              border: '1px solid #BFDBFE', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                            }}>Edit</Link>
+                            <Link href={`/courses/${course.id}`} style={{
+                              flex: 1, padding: '8px', borderRadius: 'var(--radius-sm)', textAlign: 'center',
+                              background: 'var(--accent)', color: '#fff',
+                              border: 'none', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                            }}>View</Link>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleEnroll(course.id)}
+                            disabled={isEnrolled || enrolling === course.id}
+                            style={{
+                              width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)',
+                              background: isEnrolled ? 'var(--green-dim)' : 'var(--accent)',
+                              color: isEnrolled ? 'var(--green)' : '#fff',
+                              border: isEnrolled ? '1px solid #BBF7D0' : 'none',
+                              fontSize: 13, fontWeight: 600, cursor: isEnrolled ? 'default' : 'pointer',
+                            }}
+                          >
+                            {enrolling === course.id ? 'Enrolling…' : isEnrolled ? '✓ Enrolled' : 'Enroll'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )

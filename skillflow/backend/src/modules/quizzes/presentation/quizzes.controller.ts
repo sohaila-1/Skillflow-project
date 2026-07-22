@@ -8,6 +8,9 @@ import { Inject } from '@nestjs/common';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
 import { randomUUID } from 'crypto';
+import { IssueCertificateUseCase } from '@modules/certificates/application/issue-certificate.use-case';
+import { CourseRepositoryPort, COURSE_REPOSITORY } from '@modules/courses/domain/course.repository.port';
+import { PubSubService } from '@shared/pubsub/pubsub.service';
 
 @ApiTags('quizzes')
 @ApiBearerAuth()
@@ -15,6 +18,9 @@ import { randomUUID } from 'crypto';
 export class QuizzesController {
   constructor(
     @Inject(QUIZ_REPOSITORY) private readonly quizRepo: QuizRepositoryPort,
+    @Inject(COURSE_REPOSITORY) private readonly courseRepo: CourseRepositoryPort,
+    private readonly issueCertificate: IssueCertificateUseCase,
+    private readonly pubsub: PubSubService,
   ) {}
 
   @Get()
@@ -74,11 +80,40 @@ export class QuizzesController {
       answers: dto.answers,
     });
 
+    const passed = score >= Math.ceil(quiz.questions.length * 0.7);
+
+    if (passed) {
+      const courseResult = await this.courseRepo.findById(courseId);
+      if (courseResult.isOk() && courseResult.value) {
+        const course = courseResult.value;
+        await this.issueCertificate.execute({
+          userId: user.sub,
+          courseId,
+          courseTitle: course.title,
+          studentName: user.preferred_username,
+          score,
+          totalQuestions: quiz.questions.length,
+        });
+
+        // Async: generate PDF + send email via worker
+        void this.pubsub.publish('CERTIFICATE_GENERATION', {
+          userId: user.sub,
+          courseId,
+          courseTitle: course.title,
+          studentName: user.preferred_username,
+          studentEmail: user.email,
+          score,
+          totalQuestions: quiz.questions.length,
+          completedAt: new Date().toISOString(),
+        });
+      }
+    }
+
     return {
       score,
       total: quiz.questions.length,
       percentage: Math.round((score / quiz.questions.length) * 100),
-      passed: score >= Math.ceil(quiz.questions.length * 0.7),
+      passed,
     };
   }
 

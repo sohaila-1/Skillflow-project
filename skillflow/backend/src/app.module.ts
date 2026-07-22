@@ -12,6 +12,7 @@ import { EnrollmentsModule } from '@modules/enrollments/enrollments.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CorrelationIdMiddleware } from './shared/middleware/correlation-id.middleware';
 import { JwtAuthGuard } from './shared/guards/jwt-auth.guard';
+import { PubSubModule } from './shared/pubsub/pubsub.module';
 
 @Module({
   controllers: [AppController],
@@ -27,6 +28,7 @@ import { JwtAuthGuard } from './shared/guards/jwt-auth.guard';
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
     }),
+    PubSubModule,
     AuthModule,
     CoursesModule,
     EnrollmentsModule,

@@ -1,16 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, MaxLength, IsArray, ValidateNested, IsIn, IsUrl } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, MaxLength, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class CourseLessonDto {
+  @IsString() @IsNotEmpty()
+  title!: string;
+
+  @IsString() @IsOptional()
+  duration?: string;
+
+  @IsString() @IsOptional()
+  content?: string;
+}
 
 export class CourseSectionDto {
   @IsString() @IsNotEmpty()
   title!: string;
 
-  @IsIn(['youtube', 'pdf'])
-  type!: 'youtube' | 'pdf';
-
-  @IsUrl()
-  url!: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CourseLessonDto)
+  @IsOptional()
+  lessons?: CourseLessonDto[];
 }
 
 export class CreateCourseDto {

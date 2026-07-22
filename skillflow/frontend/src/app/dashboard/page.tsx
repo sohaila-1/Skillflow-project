@@ -5,281 +5,358 @@ import Link from 'next/link'
 import { useKeycloak } from '../../providers/keycloak-provider'
 import { useRequireAuth } from '../../hooks/useRequireAuth'
 import { apiFetch } from '../../lib/api'
+import AuthNavActions from '../../components/AuthNavActions'
 
-interface Enrollment {
-  id: string
-  courseId: string
-  enrolledAt: string
-}
-
-interface Course {
+interface Lesson   { title: string; duration: string; content?: string }
+interface Section  { title: string; lessons: Lesson[] }
+interface CourseEnrollment {
   id: string
   title: string
   description: string
   category: string
   level: string
+  sections: Section[]
 }
 
-const BAND_COLORS: Record<string, string> = {
-  'Web Dev': '#0056D2', 'AI & ML': '#16A34A', 'Design': '#D97706',
-  'Backend': '#7C3AED', 'DevOps': '#DC2626', 'General': '#0891B2',
+const CAT_COLOR: Record<string, string> = {
+  'Programming': '#0056D2', 'Web Development': '#0891B2',
+  'Data Science': '#16A34A', 'DevOps': '#DC2626',
+  'Design': '#D97706', 'General': '#7C3AED',
 }
 
-function Spinner() {
+function parseMins(dur: string) {
+  const m = dur?.match(/(\d+)/)
+  return m ? parseInt(m[1]) : 0
+}
+
+function getProgress(courseId: string): number {
+  if (typeof window === 'undefined') return 0
+  try {
+    const raw = localStorage.getItem(`progress-${courseId}`)
+    if (!raw) return 0
+    const data = JSON.parse(raw) as Record<string, boolean>
+    return Object.values(data).filter(Boolean).length
+  } catch { return 0 }
+}
+
+function Shimmer({ w = '100%', h = 16, r = 4 }: { w?: string | number; h?: number; r?: number }) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-subtle)' }}>
-      <span style={{
-        width: 36, height: 36, borderRadius: '50%',
-        border: '3px solid var(--border)', borderTopColor: 'var(--accent)',
-        display: 'inline-block', animation: 'spin 0.7s linear infinite',
-      }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div style={{
+      width: w, height: h, borderRadius: r,
+      background: 'linear-gradient(90deg,#F5F5F5 25%,#EBEBEB 50%,#F5F5F5 75%)',
+      backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite'
+    }} />
+  )
+}
+
+function ProgressBar({ pct, color = '#0056D2' }: { pct: number; color?: string }) {
+  return (
+    <div style={{ height: 6, background: '#F0F0F0', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? '#16A34A' : color, borderRadius: 10, transition: 'width 0.4s' }} />
     </div>
   )
 }
 
 export default function DashboardPage() {
-  const { isLoading } = useRequireAuth()
-  const { user, logout } = useKeycloak()
-  const isInstructor = user?.roles?.includes('instructor') || user?.roles?.includes('admin')
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([])
-  const [courses, setCourses]         = useState<Record<string, Course>>({})
+  useRequireAuth()
+  const { user } = useKeycloak()
+
+  const [enrolled, setEnrolled]   = useState<CourseEnrollment[]>([])
+  const [all, setAll]             = useState<CourseEnrollment[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [progress, setProgress]   = useState<Record<string, { done: number; total: number; pct: number }>>({})
 
   useEffect(() => {
-    apiFetch<Enrollment[]>('/enrollments/me').then(async data => {
-      setEnrollments(data)
-      const courseMap: Record<string, Course> = {}
-      await Promise.all(data.map(async e => {
-        try {
-          const c = await apiFetch<Course>(`/courses/${e.courseId}`)
-          courseMap[e.courseId] = c
-        } catch {}
-      }))
-      setCourses(courseMap)
-    }).catch(() => {})
+    Promise.all([
+      apiFetch<{ courseId: string }[]>('/enrollments/me').catch(() => []),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`).then(r => r.json()).catch(() => []),
+    ]).then(([enrollRes, allRes]: [{ courseId: string }[], CourseEnrollment[]]) => {
+      const allCourses      = Array.isArray(allRes) ? allRes : []
+      const enrolledIds     = new Set((Array.isArray(enrollRes) ? enrollRes : []).map(e => e.courseId))
+      const enrolledCourses = allCourses.filter(c => enrolledIds.has(c.id))
+
+      setEnrolled(enrolledCourses)
+      setAll(allCourses)
+
+      const prog: Record<string, { done: number; total: number; pct: number }> = {}
+      enrolledCourses.forEach((c: CourseEnrollment) => {
+        const total = c.sections?.reduce((a: number, s: Section) => a + s.lessons.length, 0) ?? 0
+        const done  = getProgress(c.id)
+        prog[c.id]  = { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
+      })
+      setProgress(prog)
+    }).finally(() => setLoading(false))
   }, [])
 
-  if (isLoading) return <Spinner />
+  const completedCount = Object.values(progress).filter(p => p.pct >= 100).length
+  const inProgress     = enrolled.filter(c => (progress[c.id]?.pct ?? 0) < 100 && (progress[c.id]?.pct ?? 0) > 0)
+  const notStarted     = enrolled.filter(c => (progress[c.id]?.pct ?? 0) === 0)
+  const recommended    = all.filter(c => !enrolled.find(e => e.id === c.id)).slice(0, 3)
+  const resumeCourse   = inProgress[0] ?? notStarted[0]
 
-  const displayName = user?.preferred_username ?? user?.email ?? 'there'
-  const initials = displayName.charAt(0).toUpperCase()
+  const totalHours = enrolled.reduce((acc, c) => {
+    const mins = c.sections?.reduce((s, sec) => s + sec.lessons.reduce((a, l) => a + parseMins(l.duration), 0), 0) ?? 0
+    return acc + mins
+  }, 0)
+
+  const firstName = user?.preferred_username ?? ''
 
   return (
-    <div style={{ background: 'var(--bg-subtle)', minHeight: '100vh' }}>
-      {/* Nav */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        background: 'var(--bg)', borderBottom: '1px solid var(--border)',
-      }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
-          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
-            Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
+    <div style={{ background: '#F5F7F8', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+
+      {/* ── Top bar ── */}
+      <nav style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', height: 56, display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: '#1F1F1F', textDecoration: 'none' }}>
+            Skill<span style={{ color: '#0056D2' }}>Flow</span>
           </Link>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <Link href="/courses" style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Browse Courses</Link>
-            <Link href="/account" title="Account & Security" style={{
-              width: 34, height: 34, borderRadius: '50%',
-              background: 'var(--accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 800, fontSize: 14, color: '#fff', textDecoration: 'none',
-            }}>
-              {initials}
-            </Link>
-            <button
-              onClick={logout}
-              style={{
-                fontSize: 13, color: 'var(--text-muted)', background: 'none',
-                border: 'none', cursor: 'pointer', fontWeight: 500,
-              }}
-            >
-              Sign out
-            </button>
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+            <Link href="/courses" style={{ fontSize: 14, color: '#5C5C5C', fontWeight: 500, textDecoration: 'none' }}>Browse</Link>
+            {(user?.roles ?? []).includes('instructor') && (
+              <Link href="/courses/new" style={{ fontSize: 14, color: '#0056D2', fontWeight: 600, textDecoration: 'none' }}>+ Create Course</Link>
+            )}
+            <AuthNavActions />
           </div>
         </div>
       </nav>
 
-      <div className="container" style={{ padding: '36px 24px 80px' }}>
+      <div className="container" style={{ paddingTop: 40, paddingBottom: 60 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 36, alignItems: 'start' }}>
 
-        {/* Welcome banner */}
-        <div style={{
-          background: 'var(--bg)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-xl)', padding: '28px 32px', marginBottom: 28,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexWrap: 'wrap', gap: 20, boxShadow: 'var(--shadow-sm)',
-        }}>
+          {/* ── Left column ── */}
           <div>
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 4 }}>Welcome back,</p>
-            <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, color: 'var(--text)' }}>
-              {displayName} 👋
-            </h1>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              {(user?.roles ?? []).filter(r => ['student','instructor','admin'].includes(r)).map(r => (
-                <span key={r} style={{
-                  fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100,
-                  background: r === 'admin' ? '#FEF3C7' : r === 'instructor' ? 'var(--accent-dim)' : 'var(--green-dim)',
-                  color: r === 'admin' ? '#92400E' : r === 'instructor' ? 'var(--accent)' : 'var(--green)',
-                  border: `1px solid ${r === 'admin' ? '#FDE68A' : r === 'instructor' ? '#BFDBFE' : '#BBF7D0'}`,
-                  textTransform: 'capitalize',
-                }}>{r}</span>
-              ))}
+
+            {/* Welcome */}
+            <div style={{ marginBottom: 32 }}>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1F1F1F', letterSpacing: '-0.02em', marginBottom: 4 }}>
+                {loading ? 'My Learning' : `Welcome back${firstName ? `, ${firstName}` : ''}!`}
+              </h1>
+              <p style={{ fontSize: 14, color: '#5C5C5C' }}>Track your progress and continue where you left off.</p>
             </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--green-dim)', border: '1px solid #BBF7D0', borderRadius: 100, padding: '4px 12px' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-              </svg>
-              <span style={{ color: 'var(--green)', fontSize: 13, fontWeight: 600 }}>7-day streak — keep it up!</span>
+
+            {/* Stats strip */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 36 }}>
+              {loading
+                ? [1,2,3,4].map(i => (
+                  <div key={i} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '20px 20px' }}>
+                    <Shimmer w="50%" h={28} r={4} />
+                    <div style={{ marginTop: 8 }}><Shimmer w="80%" h={12} /></div>
+                  </div>
+                ))
+                : [
+                    { value: enrolled.length,                    label: 'Enrolled' },
+                    { value: completedCount,                     label: 'Completed' },
+                    { value: completedCount,                     label: 'Certificates' },
+                    { value: `${Math.round(totalHours / 60)}h`, label: 'Hours learned' },
+                  ].map(s => (
+                  <div key={s.label} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '16px 20px' }}>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: '#1F1F1F', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 6, fontWeight: 500 }}>{s.label}</div>
+                  </div>
+                ))
+              }
             </div>
-          </div>
-          <Link href="/courses" style={{
-            padding: '11px 20px', background: 'var(--accent)', color: '#fff',
-            borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 700,
-            display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none',
-          }}>
-            Explore Courses
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </Link>
-        </div>
 
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
-          {[
-            { label: 'Enrolled Courses', value: enrollments.length.toString(), icon: '📚', color: 'var(--accent)', bg: 'var(--accent-dim)' },
-            { label: 'Certificates',     value: '0',                           icon: '🏆', color: '#7C3AED',       bg: '#F5F3FF' },
-            { label: 'Hours Learned',    value: '0',                           icon: '⏱',  color: 'var(--orange)', bg: 'var(--orange-dim)' },
-            { label: 'Completed',        value: '0',                           icon: '✅', color: 'var(--green)',  bg: 'var(--green-dim)' },
-          ].map(s => (
-            <div key={s.label} className="card-hover" style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px', boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ width: 42, height: 42, borderRadius: 'var(--radius)', background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, marginBottom: 14 }}>{s.icon}</div>
-              <div style={{ fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-heading)', color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24 }}>
-
-          {/* Left column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-            {/* My courses */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>My Courses</h2>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  {isInstructor && (
-                    <Link href="/courses/new" style={{ fontSize: 13, color: '#fff', fontWeight: 600, background: 'var(--accent)', padding: '6px 14px', borderRadius: 'var(--radius)', textDecoration: 'none' }}>+ Create Course</Link>
-                  )}
-                  <Link href="/courses" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Browse →</Link>
+            {/* Continue Learning */}
+            {!loading && resumeCourse && (
+              <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24, marginBottom: 36 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#5C5C5C', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 16 }}>
+                  Continue Learning
+                </div>
+                <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+                  <div style={{ width: 6, height: 72, borderRadius: 4, background: CAT_COLOR[resumeCourse.category] ?? '#0056D2', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: CAT_COLOR[resumeCourse.category] ?? '#0056D2', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                      {resumeCourse.category}
+                    </div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: '#1F1F1F', marginBottom: 10 }}>{resumeCourse.title}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <ProgressBar pct={progress[resumeCourse.id]?.pct ?? 0} color={CAT_COLOR[resumeCourse.category]} />
+                      </div>
+                      <span style={{ fontSize: 12, color: '#5C5C5C', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                        {progress[resumeCourse.id]?.pct ?? 0}% complete
+                      </span>
+                    </div>
+                  </div>
+                  <Link href={`/courses/${resumeCourse.id}`} style={{ flexShrink: 0, padding: '10px 20px', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                    Resume
+                  </Link>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {enrollments.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-                    <div style={{ fontSize: 36, marginBottom: 12 }}>📚</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>No courses yet</div>
-                    <Link href="/courses" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 14 }}>Browse courses →</Link>
-                  </div>
-                ) : enrollments.map(e => {
-                  const c = courses[e.courseId]
-                  const color = BAND_COLORS[c?.category ?? ''] ?? '#0891B2'
-                  return (
-                    <div key={e.id} className="card-hover" style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px 22px', boxShadow: 'var(--shadow-sm)' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                        <div style={{ width: 48, height: 48, borderRadius: 'var(--radius)', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>📚</div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <h3 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3, color: 'var(--text)', marginBottom: 4 }}>{c?.title ?? 'Loading…'}</h3>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>{c?.category} · {c?.level}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                            Enrolled {new Date(e.enrolledAt).toLocaleDateString()}
-                          </div>
-                        </div>
+            )}
+
+            {/* My Courses */}
+            <div style={{ marginBottom: 36 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 20 }}>
+                <h2 style={{ fontSize: 19, fontWeight: 700, color: '#1F1F1F', letterSpacing: '-0.01em' }}>My Courses</h2>
+                {enrolled.length > 0 && (
+                  <span style={{ fontSize: 13, color: '#5C5C5C' }}>{enrolled.length} course{enrolled.length !== 1 ? 's' : ''} enrolled</span>
+                )}
+              </div>
+
+              {loading ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {[1,2,3,4].map(i => (
+                    <div key={i} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: 5 }}><Shimmer h={5} /></div>
+                      <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <Shimmer w="30%" h={10} /><Shimmer w="85%" h={14} /><Shimmer w="60%" h={10} /><Shimmer h={6} />
                       </div>
                     </div>
-                  )
-                })}
-              </div>
+                  ))}
+                </div>
+              ) : enrolled.length === 0 ? (
+                <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '52px 32px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 15, color: '#5C5C5C', marginBottom: 20 }}>You haven't enrolled in any courses yet.</div>
+                  <Link href="/courses" style={{ padding: '10px 24px', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                    Browse Courses
+                  </Link>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {enrolled.map(course => {
+                    const color    = CAT_COLOR[course.category] ?? '#7C3AED'
+                    const prog     = progress[course.id] ?? { done: 0, total: 0, pct: 0 }
+                    const isDone   = prog.pct >= 100
+                    const total    = course.sections?.reduce((a,s) => a + s.lessons.length, 0) ?? 0
+
+                    return (
+                      <Link key={course.id} href={`/courses/${course.id}`} style={{ display: 'block', textDecoration: 'none' }}>
+                        <div
+                          style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)')}
+                          onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)')}
+                        >
+                          <div style={{ height: 5, background: isDone ? '#16A34A' : color }} />
+                          <div style={{ padding: '18px 18px 20px' }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+                              {course.category}
+                            </div>
+                            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1F1F1F', lineHeight: 1.4, marginBottom: 16, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {course.title}
+                            </h3>
+
+                            <div style={{ marginBottom: 8 }}>
+                              <ProgressBar pct={prog.pct} color={color} />
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 12, color: '#9CA3AF' }}>{prog.done}/{total} lessons</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: isDone ? '#16A34A' : color }}>
+                                {isDone ? 'Completed' : `${prog.pct}%`}
+                              </span>
+                            </div>
+
+                            {isDone && (
+                              <div style={{ marginTop: 12, padding: '8px 12px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+                                </svg>
+                                <span style={{ fontSize: 12, color: '#15803D', fontWeight: 600 }}>Certificate earned</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
             </div>
+
+            {/* Recommended */}
+            {!loading && recommended.length > 0 && (
+              <div>
+                <h2 style={{ fontSize: 19, fontWeight: 700, color: '#1F1F1F', letterSpacing: '-0.01em', marginBottom: 20 }}>Recommended for you</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {recommended.map(course => {
+                    const color = CAT_COLOR[course.category] ?? '#7C3AED'
+                    return (
+                      <Link key={course.id} href={`/courses/${course.id}`} style={{ display: 'block', textDecoration: 'none' }}>
+                        <div
+                          style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, display: 'flex', alignItems: 'center', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)')}
+                          onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)')}
+                        >
+                          <div style={{ width: 5, alignSelf: 'stretch', background: color, flexShrink: 0 }} />
+                          <div style={{ padding: '16px 20px', flex: 1 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{course.category}</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: '#1F1F1F', marginBottom: 4 }}>{course.title}</div>
+                            <div style={{ fontSize: 12, color: '#9CA3AF' }}>{course.level}</div>
+                          </div>
+                          <div style={{ padding: '0 20px', flexShrink: 0 }}>
+                            <span style={{ fontSize: 13, color: '#0056D2', fontWeight: 600 }}>Enroll →</span>
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Right column */}
+          {/* ── Right sidebar ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* Account & Security card */}
-            <div style={{
-              background: 'var(--bg)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)', padding: '22px', boxShadow: 'var(--shadow-sm)',
-            }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>Account</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: '50%', background: 'var(--accent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 800, fontSize: 18, color: '#fff', flexShrink: 0,
-                }}>
-                  {initials}
+            {/* Profile card */}
+            <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#0056D2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 20, fontWeight: 700, flexShrink: 0 }}>
+                  {firstName?.[0]?.toUpperCase() ?? 'U'}
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{displayName}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{user?.email}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1F1F1F' }}>{user?.preferred_username ?? 'Learner'}</div>
+                  <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{user?.email ?? ''}</div>
                 </div>
               </div>
-              <Link href="/account" style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 12px', borderRadius: 'var(--radius)',
-                background: 'var(--accent-dim)', border: '1px solid #BFDBFE',
-                fontSize: 13, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none',
-              }}>
-                Security & 2FA settings
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 16, borderTop: '1px solid #F0F0F0' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1F1F1F', fontFamily: 'var(--font-heading)' }}>{enrolled.length}</div>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>Courses</div>
+                </div>
+                <div style={{ textAlign: 'center', borderLeft: '1px solid #F0F0F0' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1F1F1F', fontFamily: 'var(--font-heading)' }}>{completedCount}</div>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>Completed</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Learning overview */}
+            {!loading && enrolled.length > 0 && (
+              <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1F1F1F', marginBottom: 18 }}>Learning Overview</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {enrolled.slice(0, 4).map(c => {
+                    const prog  = progress[c.id] ?? { pct: 0 }
+                    const color = CAT_COLOR[c.category] ?? '#7C3AED'
+                    return (
+                      <div key={c.id}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <span style={{ fontSize: 12, color: '#5C5C5C', fontWeight: 500, flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{c.title}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: prog.pct >= 100 ? '#16A34A' : color, marginLeft: 8, flexShrink: 0 }}>{prog.pct}%</span>
+                        </div>
+                        <ProgressBar pct={prog.pct} color={color} />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Browse CTA */}
+            <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 4, padding: 24 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#1E3A8A', marginBottom: 8 }}>Discover more</div>
+              <p style={{ fontSize: 13, color: '#1E40AF', lineHeight: 1.6, marginBottom: 16 }}>
+                Explore our full course catalog and find your next skill.
+              </p>
+              <Link href="/courses" style={{ display: 'block', textAlign: 'center', padding: '10px 0', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                Browse All Courses
               </Link>
             </div>
 
-            {/* Recent enrollments */}
-            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '22px', boxShadow: 'var(--shadow-sm)' }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 18, color: 'var(--text)' }}>Recent Activity</h3>
-              {enrollments.length === 0 ? (
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No activity yet</div>
-              ) : enrollments.slice(0, 4).map((e, i) => (
-                <div key={e.id} style={{ display: 'flex', gap: 12, alignItems: 'center', paddingBottom: i < 3 ? 14 : 0, marginBottom: i < 3 ? 14 : 0, borderBottom: i < 3 ? '1px solid var(--border)' : 'none' }}>
-                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>🚀</div>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'var(--text)' }}>Enrolled in <strong>{courses[e.courseId]?.title ?? '…'}</strong></div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(e.enrolledAt).toLocaleDateString()}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Quick actions */}
-            <div style={{
-              background: 'var(--bg)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)', padding: '22px', boxShadow: 'var(--shadow-sm)',
-            }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, color: 'var(--text)' }}>Quick Actions</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { label: 'Take a Quiz',        href: '/courses/1/quiz', icon: '🎯', bg: 'var(--accent-dim)', border: '#BFDBFE', color: 'var(--accent)' },
-                  { label: 'Browse New Courses', href: '/courses',        icon: '🔍', bg: 'var(--green-dim)',  border: '#BBF7D0', color: 'var(--green)' },
-                  { label: 'Account & Security', href: '/account',        icon: '🔐', bg: '#F5F3FF',          border: '#DDD6FE', color: '#7C3AED' },
-                ].map(a => (
-                  <Link key={a.label} href={a.href} className="card-hover" style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '11px 14px', borderRadius: 'var(--radius)',
-                    background: a.bg, border: `1px solid ${a.border}`, textDecoration: 'none',
-                  }}>
-                    <span style={{ fontSize: 16 }}>{a.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: a.color }}>{a.label}</span>
-                    <svg style={{ marginLeft: 'auto' }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={a.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>

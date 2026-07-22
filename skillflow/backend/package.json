@@ -52,6 +52,9 @@
       "^@config/(.*)$": "<rootDir>/config/$1"
     }
   },
+  "overrides": {
+    "jose": "4.15.9"
+  },
   "devDependencies": {
     "@nestjs/cli": "^10.4.2",
     "@nestjs/testing": "^10.3.10",

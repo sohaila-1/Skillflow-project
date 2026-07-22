@@ -13,6 +13,7 @@ import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CurrentUser } from '@shared/decorators/current-user.decorator';
 import { AuthenticatedUser } from '@modules/auth/interfaces/authenticated-user.interface';
+import { Public } from '@shared/decorators/public.decorator';
 
 @ApiTags('courses')
 @ApiBearerAuth()
@@ -26,6 +27,7 @@ export class CoursesController {
     private readonly deleteCourse: DeleteCourseUseCase,
   ) {}
 
+  @Public()
   @Get()
   async findAll() {
     const result = await this.listCourses.execute();
@@ -33,6 +35,7 @@ export class CoursesController {
     return result.value;
   }
 
+  @Public()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const result = await this.getCourse.execute(id);

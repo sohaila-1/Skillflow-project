@@ -1,9 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
+export interface CourseLesson {
+  title: string;
+  duration: string;
+  content: string;
+}
+
 export interface CourseSection {
   title: string;
-  type: 'youtube' | 'pdf';
-  url: string;
+  lessons: CourseLesson[];
 }
 
 @Entity('courses')

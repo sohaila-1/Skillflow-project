@@ -1,0 +1,95 @@
+name: Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: europe-west1
+  REGISTRY: europe-west1-docker.pkg.dev
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      - name: Build & push backend
+        run: |
+          docker build -t $REGISTRY/$PROJECT_ID/skillflow/backend:$GITHUB_SHA \
+            --target production ./skillflow/backend
+          docker push $REGISTRY/$PROJECT_ID/skillflow/backend:$GITHUB_SHA
+
+      - name: Build & push worker
+        run: |
+          docker build -t $REGISTRY/$PROJECT_ID/skillflow/worker:$GITHUB_SHA \
+            --target production ./skillflow/worker
+          docker push $REGISTRY/$PROJECT_ID/skillflow/worker:$GITHUB_SHA
+
+      - name: Build & push frontend
+        run: |
+          docker build -t $REGISTRY/$PROJECT_ID/skillflow/frontend:$GITHUB_SHA \
+            --target production ./skillflow/frontend
+          docker push $REGISTRY/$PROJECT_ID/skillflow/frontend:$GITHUB_SHA
+
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy skillflow-backend-prod \
+            --image=$REGISTRY/$PROJECT_ID/skillflow/backend:$GITHUB_SHA \
+            --region=$REGION \
+            --platform=managed \
+            --allow-unauthenticated \
+            --port=3000 \
+            --set-env-vars="NODE_ENV=production,KEYCLOAK_REALM=skillflow" \
+            --set-secrets="DATABASE_URL=skillflow-db-url:latest,KEYCLOAK_URL=skillflow-keycloak-url:latest"
+
+      - name: Deploy worker to Cloud Run
+        run: |
+          gcloud run deploy skillflow-worker-prod \
+            --image=$REGISTRY/$PROJECT_ID/skillflow/worker:$GITHUB_SHA \
+            --region=$REGION \
+            --platform=managed \
+            --no-allow-unauthenticated \
+            --port=8080 \
+            --set-env-vars="NODE_ENV=production,PUBSUB_PROJECT_ID=$PROJECT_ID"
+
+      - name: Get backend URL
+        id: backend
+        run: |
+          URL=$(gcloud run services describe skillflow-backend-prod \
+            --region=$REGION --format='value(status.url)')
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy skillflow-frontend-prod \
+            --image=$REGISTRY/$PROJECT_ID/skillflow/frontend:$GITHUB_SHA \
+            --region=$REGION \
+            --platform=managed \
+            --allow-unauthenticated \
+            --port=4000 \
+            --set-env-vars="NEXT_PUBLIC_API_URL=${{ steps.backend.outputs.url }}/v1,NEXT_PUBLIC_KEYCLOAK_REALM=skillflow,NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=skillflow-frontend" \
+            --set-secrets="NEXT_PUBLIC_KEYCLOAK_URL=skillflow-keycloak-url:latest"
+
+      - name: Print deployed URLs
+        run: |
+          echo "Backend:  $(gcloud run services describe skillflow-backend-prod --region=$REGION --format='value(status.url)')"
+          echo "Frontend: $(gcloud run services describe skillflow-frontend-prod --region=$REGION --format='value(status.url)')"

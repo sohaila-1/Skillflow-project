@@ -23,7 +23,13 @@ export class UpdateCourseUseCase {
 
     if (dto.title !== undefined) course.title = dto.title;
     if (dto.description !== undefined) course.description = dto.description;
+    if (dto.category !== undefined) course.category = dto.category;
+    if (dto.level !== undefined) course.level = dto.level;
     if (dto.published !== undefined) course.published = dto.published;
+    if (dto.sections !== undefined) course.sections = dto.sections.map(s => ({
+      title: s.title,
+      lessons: (s.lessons ?? []).map(l => ({ title: l.title, duration: l.duration ?? '10 min', content: l.content ?? '' })),
+    }));
 
     return this.repo.save(course);
   }

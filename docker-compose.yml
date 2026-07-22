@@ -22,7 +22,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.5
     container_name: skillflow-keycloak
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -30,64 +30,82 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-skillflow}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak-realm:/opt/keycloak/data/import
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
 
-  pubsub-emulator:
-    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
-    container_name: skillflow-pubsub
-    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
-    ports:
-      - "8085:8085"
-
   backend:
     build:
-      context: ./backend
+      context: ./skillflow/backend
       target: development
     container_name: skillflow-backend
     ports:
       - "3000:3000"
-    env_file: ./backend/.env
+    env_file: ./skillflow/backend/.env
+    environment:
+      DATABASE_URL: postgresql://skillflow:skillflow@postgres:5432/skillflow
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_ISSUER: http://localhost:8080
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
     volumes:
-      - ./backend:/app
+      - ./skillflow/backend:/app
       - /app/node_modules
     depends_on:
       postgres:
         condition: service_healthy
       keycloak:
         condition: service_started
-      pubsub-emulator:
-        condition: service_started
-
-  worker:
-    build:
-      context: ./worker
-      target: development
-    container_name: skillflow-worker
-    env_file: ./worker/.env
-    volumes:
-      - ./worker:/app
-      - /app/node_modules
-    depends_on:
-      pubsub-emulator:
-        condition: service_started
 
   frontend:
     build:
-      context: ./frontend
+      context: ./skillflow/frontend
       target: development
     container_name: skillflow-frontend
     ports:
       - "4000:4000"
-    env_file: ./frontend/.env
+    env_file: ./skillflow/frontend/.env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000/v1
+      NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8080
+      NEXT_PUBLIC_KEYCLOAK_REALM: skillflow
+      NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: skillflow-frontend
     volumes:
-      - ./frontend:/app
+      - ./skillflow/frontend:/app
       - /app/node_modules
     depends_on:
       - backend
+
+  worker:
+    build:
+      context: ./skillflow/worker
+      target: development
+    container_name: skillflow-worker
+    env_file: ./skillflow/worker/.env
+    environment:
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+    volumes:
+      - ./skillflow/worker:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  pubsub-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    container_name: skillflow-pubsub
+    command: ["gcloud", "beta", "emulators", "pubsub", "start", "--host-port=0.0.0.0:8085", "--project=skillflow-local"]
+    ports:
+      - "8085:8085"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: skillflow-mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
 volumes:
   postgres_data:

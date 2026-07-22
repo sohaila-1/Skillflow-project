@@ -5,7 +5,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { passportJwtSecret } from 'jwks-rsa';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 
-/** Forme brute du payload JWT émis par Keycloak */
 interface KeycloakJwtPayload {
   sub: string;
   email: string;
@@ -18,10 +17,9 @@ export class KeycloakJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(config: ConfigService) {
     const keycloakUrl = config.getOrThrow<string>('KEYCLOAK_URL');
     const realm = config.getOrThrow<string>('KEYCLOAK_REALM');
+    const issuerUrl = config.get<string>('KEYCLOAK_ISSUER') ?? keycloakUrl;
 
     super({
-      // jwks-rsa va chercher la clé publique Keycloak à la volée (RS256)
-      // et la met en cache pour éviter d'appeler Keycloak à chaque requête
       secretOrKeyProvider: passportJwtSecret({
         cache: true,
         rateLimit: true,
@@ -30,11 +28,10 @@ export class KeycloakJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       }),
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       algorithms: ['RS256'],
-      issuer: `${keycloakUrl}/realms/${realm}`,
+      issuer: `${issuerUrl}/realms/${realm}`,
     });
   }
 
-  /** Appelé après validation de la signature — retourne req.user */
   validate(payload: KeycloakJwtPayload): AuthenticatedUser {
     return {
       sub: payload.sub,

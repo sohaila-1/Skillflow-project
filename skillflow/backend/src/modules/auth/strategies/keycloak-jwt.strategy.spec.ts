@@ -7,14 +7,14 @@ import { ConfigService } from '@nestjs/config';
 import { KeycloakJwtStrategy } from './keycloak-jwt.strategy';
 
 // On mock ConfigService pour éviter de dépendre de variables d'env dans les tests
+const ENV: Record<string, string> = {
+  KEYCLOAK_URL: 'http://keycloak:8080',
+  KEYCLOAK_REALM: 'skillflow',
+};
+
 const mockConfig = {
-  getOrThrow: (key: string) => {
-    const values: Record<string, string> = {
-      KEYCLOAK_URL: 'http://keycloak:8080',
-      KEYCLOAK_REALM: 'skillflow',
-    };
-    return values[key];
-  },
+  getOrThrow: (key: string) => ENV[key],
+  get: (key: string, fallback?: string) => ENV[key] ?? fallback,
 } as unknown as ConfigService;
 
 describe('KeycloakJwtStrategy', () => {

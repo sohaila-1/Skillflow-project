@@ -9,10 +9,11 @@ import { ListCoursesUseCase } from './application/list-courses.use-case';
 import { UpdateCourseUseCase } from './application/update-course.use-case';
 import { DeleteCourseUseCase } from './application/delete-course.use-case';
 import { CoursesController } from './presentation/courses.controller';
+import { CoursesV2Controller } from './presentation/courses-v2.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Course])],
-  controllers: [CoursesController],
+  controllers: [CoursesController, CoursesV2Controller],
   providers: [
     GetCourseUseCase,
     CreateCourseUseCase,
@@ -24,6 +25,6 @@ import { CoursesController } from './presentation/courses.controller';
       useClass: CourseTypeOrmRepository,
     },
   ],
-  exports: [GetCourseUseCase],
+  exports: [GetCourseUseCase, COURSE_REPOSITORY],
 })
 export class CoursesModule {}
