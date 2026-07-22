@@ -127,6 +127,18 @@ export class KeycloakAdminService {
     }
   }
 
+  async sendTotpSetupEmail(userId: string): Promise<void> {
+    const res = await this.adminFetch(`/users/${userId}/execute-actions-email`, {
+      method: 'PUT',
+      body: JSON.stringify(['CONFIGURE_TOTP']),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      this.logger.error(`TOTP setup email failed: ${res.status} — ${text}`);
+      throw new InternalServerErrorException('Failed to send 2FA setup email');
+    }
+  }
+
   async sendPasswordResetEmail(userId: string): Promise<void> {
     const res = await this.adminFetch(`/users/${userId}/execute-actions-email`, {
       method: 'PUT',

@@ -73,6 +73,14 @@ export class AuthController {
     return { enabled };
   }
 
+  @Post('2fa/setup')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send 2FA setup link to user email via Keycloak' })
+  async setupTotp(@CurrentUser() user: AuthenticatedUser): Promise<{ ok: boolean; email: string }> {
+    await this.adminService.sendTotpSetupEmail(user.sub);
+    return { ok: true, email: user.email };
+  }
+
   @Delete('2fa')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Disable TOTP for the current user via Keycloak Admin API' })
