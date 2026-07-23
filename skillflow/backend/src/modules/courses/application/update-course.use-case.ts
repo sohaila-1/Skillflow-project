@@ -26,6 +26,7 @@ export class UpdateCourseUseCase {
     if (dto.category !== undefined) course.category = dto.category;
     if (dto.level !== undefined) course.level = dto.level;
     if (dto.published !== undefined) course.published = dto.published;
+    if (dto.isPremium !== undefined) course.isPremium = dto.isPremium;
     if (dto.sections !== undefined) course.sections = dto.sections.map(s => ({
       title: s.title,
       lessons: (s.lessons ?? []).map(l => ({ title: l.title, duration: l.duration ?? '10 min', content: l.content ?? '' })),

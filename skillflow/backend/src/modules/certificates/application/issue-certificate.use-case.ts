@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Inject, Injectable } from '@nestjs/common';
 import { Certificate } from '../domain/certificate.entity';
+import {
+  CertificateRepositoryPort,
+  CERTIFICATE_REPOSITORY,
+} from '../domain/certificate.repository.port';
 
 export interface IssueCertificateDto {
   userId: string;
@@ -15,25 +17,25 @@ export interface IssueCertificateDto {
 @Injectable()
 export class IssueCertificateUseCase {
   constructor(
-    @InjectRepository(Certificate)
-    private readonly repo: Repository<Certificate>,
+    @Inject(CERTIFICATE_REPOSITORY)
+    private readonly repo: CertificateRepositoryPort,
   ) {}
 
   async execute(dto: IssueCertificateDto): Promise<Certificate> {
-    const existing = await this.repo.findOne({
-      where: { userId: dto.userId, courseId: dto.courseId },
-    });
+    const existing = await this.repo.findByUserAndCourse(dto.userId, dto.courseId);
     if (existing) return existing;
-
-    const cert = this.repo.create(dto);
-    return this.repo.save(cert);
+    return this.repo.save(dto);
   }
 
-  async findByUser(userId: string): Promise<Certificate[]> {
-    return this.repo.find({ where: { userId }, order: { issuedAt: 'DESC' } });
+  findByUser(userId: string): Promise<Certificate[]> {
+    return this.repo.findByUser(userId);
   }
 
-  async markEmailStatus(userId: string, courseId: string, emailSent: boolean): Promise<void> {
-    await this.repo.update({ userId, courseId }, { emailSent });
+  findById(id: string): Promise<Certificate | null> {
+    return this.repo.findById(id);
+  }
+
+  markEmailStatus(userId: string, courseId: string, emailSent: boolean): Promise<void> {
+    return this.repo.markEmailSent(userId, courseId, emailSent);
   }
 }

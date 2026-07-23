@@ -4,7 +4,7 @@
 FROM node:20.16.0-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # ──────────────────────────────────────────────
 # Stage 2: build — compile TypeScript

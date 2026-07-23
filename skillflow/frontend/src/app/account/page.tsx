@@ -102,7 +102,6 @@ export default function AccountPage() {
   const [totpLoading, setTotpLoading] = useState(true)
   const [totpMsg, setTotpMsg] = useState<Msg | null>(null)
   const [totpSaving, setTotpSaving] = useState(false)
-  const [totpEmailSent, setTotpEmailSent] = useState(false)
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -222,12 +221,11 @@ export default function AccountPage() {
     setTotpSaving(true)
     setTotpMsg(null)
     try {
-      const res = await apiFetch<{ email: string }>('/auth/2fa/setup', { method: 'POST' })
-      setTotpEmailSent(true)
-      setTotpMsg({ text: `Setup link sent to ${res.email}. Check your inbox (or Mailpit on :8025 in dev).`, ok: true })
+      const { loginUrl } = await apiFetch<{ loginUrl: string }>('/auth/2fa/setup', { method: 'POST' })
+      // Redirect to Keycloak login — CONFIGURE_TOTP required action will fire after re-auth
+      window.location.href = loginUrl
     } catch {
-      setTotpMsg({ text: 'Failed to send setup email. Please try again.', ok: false })
-    } finally {
+      setTotpMsg({ text: 'Failed to initiate 2FA setup. Please try again.', ok: false })
       setTotpSaving(false)
     }
   }
@@ -518,29 +516,19 @@ export default function AccountPage() {
           {totpMsg && <Alert msg={totpMsg} />}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {!totpEnabled && (
-              totpEmailSent ? (
-                <div style={{
-                  padding: '10px 16px', background: '#F0FDF4', border: '1px solid #BBF7D0',
-                  borderRadius: 6, fontSize: 13, color: '#15803D', fontWeight: 600,
+              <button
+                onClick={setupTotp}
+                disabled={totpSaving}
+                style={{
+                  padding: '10px 20px', background: '#0056D2', color: '#fff',
+                  border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 700,
+                  cursor: totpSaving ? 'not-allowed' : 'pointer', opacity: totpSaving ? 0.7 : 1,
                   display: 'flex', alignItems: 'center', gap: 8,
-                }}>
-                  <LockIcon /> Check your email for the 2FA setup link
-                </div>
-              ) : (
-                <button
-                  onClick={setupTotp}
-                  disabled={totpSaving}
-                  style={{
-                    padding: '10px 20px', background: '#0056D2', color: '#fff',
-                    border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 700,
-                    cursor: totpSaving ? 'not-allowed' : 'pointer', opacity: totpSaving ? 0.7 : 1,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}
-                >
-                  {totpSaving ? <Spinner size={14} /> : <LockIcon />}
-                  Set up 2FA
-                </button>
-              )
+                }}
+              >
+                {totpSaving ? <Spinner size={14} /> : <LockIcon />}
+                {totpSaving ? 'Redirecting…' : 'Set up 2FA'}
+              </button>
             )}
             {totpEnabled && (
               <button

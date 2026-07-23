@@ -18,6 +18,15 @@ interface CourseEnrollment {
   sections: Section[]
 }
 
+interface Certificate {
+  id: string
+  courseId: string
+  courseTitle: string
+  score: number
+  totalQuestions: number
+  issuedAt: string
+}
+
 const CAT_COLOR: Record<string, string> = {
   'Programming': '#0056D2', 'Web Development': '#0891B2',
   'Data Science': '#16A34A', 'DevOps': '#DC2626',
@@ -63,14 +72,17 @@ export default function DashboardPage() {
 
   const [enrolled, setEnrolled]   = useState<CourseEnrollment[]>([])
   const [all, setAll]             = useState<CourseEnrollment[]>([])
+  const [certs, setCerts]         = useState<Certificate[]>([])
   const [loading, setLoading]     = useState(true)
   const [progress, setProgress]   = useState<Record<string, { done: number; total: number; pct: number }>>({})
 
   useEffect(() => {
     Promise.all([
       apiFetch<{ courseId: string }[]>('/enrollments/me').catch(() => []),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`).then(r => r.json()).catch(() => []),
-    ]).then(([enrollRes, allRes]: [{ courseId: string }[], CourseEnrollment[]]) => {
+      apiFetch<CourseEnrollment[]>('/courses').catch(() => []),
+      apiFetch<Certificate[]>('/certificates/me').catch(() => []),
+    ]).then(([enrollRes, allRes, certsRes]: [{ courseId: string }[], CourseEnrollment[], Certificate[]]) => {
+      setCerts(Array.isArray(certsRes) ? certsRes : [])
       const allCourses      = Array.isArray(allRes) ? allRes : []
       const enrolledIds     = new Set((Array.isArray(enrollRes) ? enrollRes : []).map(e => e.courseId))
       const enrolledCourses = allCourses.filter(c => enrolledIds.has(c.id))
@@ -145,13 +157,16 @@ export default function DashboardPage() {
                   </div>
                 ))
                 : [
-                    { value: enrolled.length,                    label: 'Enrolled' },
-                    { value: completedCount,                     label: 'Completed' },
-                    { value: completedCount,                     label: 'Certificates' },
-                    { value: `${Math.round(totalHours / 60)}h`, label: 'Hours learned' },
+                    { value: enrolled.length,                    label: 'Enrolled',     href: undefined },
+                    { value: completedCount,                     label: 'Completed',    href: undefined },
+                    { value: certs.length,                       label: 'Certificates', href: '/certificates' },
+                    { value: `${Math.round(totalHours / 60)}h`, label: 'Hours learned', href: undefined },
                   ].map(s => (
-                  <div key={s.label} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '16px 20px' }}>
-                    <div style={{ fontSize: 28, fontWeight: 800, color: '#1F1F1F', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>{s.value}</div>
+                  <div key={s.label} onClick={() => s.href && (window.location.href = s.href)} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '16px 20px', cursor: s.href ? 'pointer' : 'default', transition: 'border-color 0.15s' }}
+                    onMouseEnter={e => { if (s.href) (e.currentTarget as HTMLDivElement).style.borderColor = '#7C3AED' }}
+                    onMouseLeave={e => { if (s.href) (e.currentTarget as HTMLDivElement).style.borderColor = '#E0E0E0' }}
+                  >
+                    <div style={{ fontSize: 28, fontWeight: 800, color: s.href ? '#7C3AED' : '#1F1F1F', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>{s.value}</div>
                     <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 6, fontWeight: 500 }}>{s.label}</div>
                   </div>
                 ))
@@ -249,12 +264,10 @@ export default function DashboardPage() {
                               </span>
                             </div>
 
-                            {isDone && (
-                              <div style={{ marginTop: 12, padding: '8px 12px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
-                                </svg>
-                                <span style={{ fontSize: 12, color: '#15803D', fontWeight: 600 }}>Certificate earned</span>
+                            {certs.find(c => c.courseId === course.id) && (
+                              <div style={{ marginTop: 12, padding: '8px 12px', background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ fontSize: 14 }}>🏅</span>
+                                <span style={{ fontSize: 12, color: '#7C3AED', fontWeight: 600 }}>Certificate earned · View</span>
                               </div>
                             )}
                           </div>
@@ -342,6 +355,27 @@ export default function DashboardPage() {
                       </div>
                     )
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Certificates */}
+            {!loading && certs.length > 0 && (
+              <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1F1F1F' }}>Certificates</div>
+                  <Link href="/certificates" style={{ fontSize: 12, color: '#7C3AED', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {certs.slice(0, 3).map(cert => (
+                    <Link key={cert.id} href={`/certificates/${cert.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F5F3FF', border: '1px solid #EDE9FE', borderRadius: 6, textDecoration: 'none' }}>
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>🏅</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#111827', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{cert.courseTitle}</div>
+                        <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>{Math.round(cert.score / cert.totalQuestions * 100)}% · {new Date(cert.issuedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}

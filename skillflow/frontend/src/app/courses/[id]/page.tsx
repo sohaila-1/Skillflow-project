@@ -24,9 +24,25 @@ interface Course {
   instructorId: string
   category: string
   level: string
+  isPremium: boolean
   published: boolean
   sections: Section[]
   createdAt: string
+}
+
+interface Review {
+  id: string
+  userId: string
+  userName: string
+  rating: number
+  comment: string | null
+  createdAt: string
+}
+
+interface ReviewsData {
+  reviews: Review[]
+  averageRating: number
+  totalReviews: number
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -47,19 +63,23 @@ const CATEGORY_ICONS: Record<string, string> = {
   'General':         '📚',
 }
 
+function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 1 }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <span key={i} style={{ fontSize: size, color: i <= rating ? '#F59E0B' : '#D1D5DB' }}>★</span>
+      ))}
+    </span>
+  )
+}
+
 function getLessonKey(courseId: string, sectionIdx: number, lessonIdx: number) {
   return `${courseId}-s${sectionIdx}-l${lessonIdx}`
 }
 
-function loadProgress(courseId: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(`progress-${courseId}`)
-    return raw ? new Set(JSON.parse(raw)) : new Set()
-  } catch { return new Set() }
-}
-
-function saveProgress(courseId: string, done: Set<string>) {
-  localStorage.setItem(`progress-${courseId}`, JSON.stringify(Array.from(done)))
+function apiKeyToLocal(courseId: string, apiKey: string): string {
+  const [sIdx, lIdx] = apiKey.split('_')
+  return `${courseId}-s${sIdx}-l${lIdx}`
 }
 
 export default function CourseDetailPage() {
@@ -70,42 +90,70 @@ export default function CourseDetailPage() {
   const [course, setCourse]         = useState<Course | null>(null)
   const [loading, setLoading]       = useState(true)
   const [enrolled, setEnrolled]     = useState(false)
+  const [enrollLoading, setEnrollLoading] = useState(true)
   const [enrolling, setEnrolling]   = useState(false)
   const [deleting, setDeleting]     = useState(false)
   const [hasQuiz, setHasQuiz]       = useState(false)
+  const [enrollError, setEnrollError] = useState<string | null>(null)
 
   const [activeSection, setActiveSection] = useState(0)
   const [activeLesson, setActiveLesson]   = useState(0)
   const [completed, setCompleted]         = useState<Set<string>>(new Set())
 
+  const [reviewsData, setReviewsData]   = useState<ReviewsData>({ reviews: [], averageRating: 0, totalReviews: 0 })
+  const [myRating, setMyRating]         = useState(0)
+  const [myComment, setMyComment]       = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [reviewError, setReviewError]   = useState<string | null>(null)
+  const [hasReviewed, setHasReviewed]   = useState(false)
+
+  const loadReviews = useCallback(() => {
+    apiFetch<ReviewsData>(`/courses/${id}/reviews`)
+      .then(data => {
+        setReviewsData(data)
+        if (user?.sub) {
+          setHasReviewed(data.reviews.some(r => r.userId === user.sub))
+        }
+      })
+      .catch(() => {})
+  }, [id, user?.sub])
+
   useEffect(() => {
     apiFetch<Course>(`/courses/${id}`)
-      .then(c => {
-        setCourse(c)
-        setCompleted(loadProgress(id))
-        setLoading(false)
-      })
+      .then(c => { setCourse(c); setLoading(false) })
       .catch(() => setLoading(false))
 
     apiFetch(`/courses/${id}/quiz`)
       .then(() => setHasQuiz(true))
       .catch(() => setHasQuiz(false))
-  }, [id])
+
+    loadReviews()
+  }, [id, loadReviews])
 
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated) { setEnrollLoading(false); return }
     apiFetch<{ courseId: string }[]>('/enrollments/me')
       .then(data => setEnrolled(data.some(e => e.courseId === id)))
       .catch(() => {})
+      .finally(() => setEnrollLoading(false))
+
+    apiFetch<{ completedLessonIds: string[] }>(`/courses/${id}/progress`)
+      .then(data => {
+        const keys = new Set(data.completedLessonIds.map(k => apiKeyToLocal(id, k)))
+        setCompleted(keys)
+      })
+      .catch(() => {})
   }, [isAuthenticated, id])
 
-  const markComplete = useCallback(() => {
+  const markComplete = useCallback(async () => {
     if (!course) return
     const key = getLessonKey(id, activeSection, activeLesson)
     const next = new Set(completed)
     next.add(key)
     setCompleted(next)
-    saveProgress(id, next)
+
+    apiFetch(`/courses/${id}/progress/lessons/${activeSection}/${activeLesson}/complete`, { method: 'PATCH' })
+      .catch(() => {})
 
     const section = course.sections[activeSection]
     if (activeLesson < section.lessons.length - 1) {
@@ -118,11 +166,23 @@ export default function CourseDetailPage() {
 
   async function handleEnroll() {
     if (!isAuthenticated) { router.push('/auth/login'); return }
-    setEnrolling(true)
+    if (course?.isPremium) {
+      router.push(`/subscribe?returnTo=/courses/${id}`)
+      return
+    }
+    setEnrolling(true); setEnrollError(null)
     try {
       await apiFetch('/enrollments', { method: 'POST', body: JSON.stringify({ courseId: id }) })
       setEnrolled(true)
-    } catch {}
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to enroll'
+      if (msg.includes('402') || msg.includes('PAYMENT')) {
+        router.push(`/subscribe?returnTo=/courses/${id}`)
+        return
+      }
+      setEnrollError(msg.includes('409') ? 'Already enrolled' : 'Failed to enroll. Please try again.')
+      setTimeout(() => setEnrollError(null), 4000)
+    }
     setEnrolling(false)
   }
 
@@ -133,6 +193,25 @@ export default function CourseDetailPage() {
       await apiFetch(`/courses/${id}`, { method: 'DELETE' })
       router.push('/courses')
     } catch { setDeleting(false) }
+  }
+
+  async function handleReviewSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (myRating === 0) { setReviewError('Please select a rating'); return }
+    setSubmittingReview(true); setReviewError(null)
+    try {
+      await apiFetch(`/courses/${id}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({ rating: myRating, comment: myComment || undefined }),
+      })
+      setHasReviewed(true)
+      setMyRating(0); setMyComment('')
+      loadReviews()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to submit review'
+      setReviewError(msg.includes('409') ? 'You have already reviewed this course' : 'Failed to submit review')
+    }
+    setSubmittingReview(false)
   }
 
   if (loading) return (
@@ -154,9 +233,9 @@ export default function CourseDetailPage() {
   const icon  = CATEGORY_ICONS[course.category] ?? '📚'
   const isOwner = user?.sub === course.instructorId
 
-  const totalLessons = course.sections.reduce((acc, s) => acc + s.lessons.length, 0)
-  const completedCount = completed.size
-  const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
+  const totalLessons    = course.sections.reduce((acc, s) => acc + s.lessons.length, 0)
+  const completedCount  = completed.size
+  const progressPct     = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
 
   const currentLesson = course.sections[activeSection]?.lessons[activeLesson]
   const currentKey    = getLessonKey(id, activeSection, activeLesson)
@@ -164,13 +243,19 @@ export default function CourseDetailPage() {
 
   const flatLessons: { sIdx: number; lIdx: number }[] = []
   course.sections.forEach((s, sIdx) => s.lessons.forEach((_, lIdx) => flatLessons.push({ sIdx, lIdx })))
-  const flatIndex = flatLessons.findIndex(f => f.sIdx === activeSection && f.lIdx === activeLesson)
+  const flatIndex  = flatLessons.findIndex(f => f.sIdx === activeSection && f.lIdx === activeLesson)
   const prevLesson = flatLessons[flatIndex - 1]
   const nextLesson = flatLessons[flatIndex + 1]
 
   return (
     <div style={{ background: 'var(--bg-subtle)', minHeight: '100vh' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {enrollError && (
+        <div style={{ position: 'fixed', top: 80, right: 24, zIndex: 999, background: '#DC2626', color: '#fff', padding: '10px 20px', borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600, boxShadow: 'var(--shadow)' }}>
+          {enrollError}
+        </div>
+      )}
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
@@ -208,6 +293,14 @@ export default function CourseDetailPage() {
               <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, maxWidth: 600, lineHeight: 1.6, marginBottom: 20 }}>{course.description}</p>
 
               <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+                {reviewsData.totalReviews > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Stars rating={Math.round(reviewsData.averageRating)} size={13} />
+                    <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 600 }}>
+                      {reviewsData.averageRating.toFixed(1)} ({reviewsData.totalReviews})
+                    </span>
+                  </div>
+                )}
                 <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>
                   📖 {course.sections.length} sections · {totalLessons} lessons
                 </div>
@@ -227,7 +320,7 @@ export default function CourseDetailPage() {
                     border: enrolled ? '2px solid rgba(255,255,255,0.5)' : 'none',
                     fontSize: 14, fontWeight: 700, cursor: enrolled ? 'default' : 'pointer',
                   }}>
-                    {enrolling ? 'Enrolling…' : enrolled ? '✓ Enrolled' : 'Enroll for Free'}
+                    {enrolling ? 'Enrolling…' : enrolled ? '✓ Enrolled' : course.isPremium ? '👑 Get Premium' : 'Enroll for Free'}
                   </button>
                 )}
               </div>
@@ -271,8 +364,8 @@ export default function CourseDetailPage() {
                   {sec.title}
                 </div>
                 {sec.lessons.map((lesson, lIdx) => {
-                  const key     = getLessonKey(id, sIdx, lIdx)
-                  const isDone  = completed.has(key)
+                  const key      = getLessonKey(id, sIdx, lIdx)
+                  const isDone   = completed.has(key)
                   const isActive = activeSection === sIdx && activeLesson === lIdx
                   return (
                     <button
@@ -307,7 +400,6 @@ export default function CourseDetailPage() {
               </div>
             ))}
 
-            {/* Quiz entry point */}
             {hasQuiz && (
               <Link href={`/courses/${id}/quiz`} style={{
                 display: 'flex', alignItems: 'center', gap: 10, width: '100%',
@@ -331,9 +423,38 @@ export default function CourseDetailPage() {
               <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
               <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>No content yet</div>
             </div>
+          ) : enrollLoading ? (
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '80px', textAlign: 'center' }}>
+              <span style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--accent)', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+            </div>
+          ) : !enrolled && !isOwner ? (
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '64px 40px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ fontSize: 52, marginBottom: 20 }}>{course.isPremium ? '👑' : '🔒'}</div>
+              <h3 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginBottom: 12 }}>
+                {course.isPremium ? 'Premium content' : 'Enroll to start learning'}
+              </h3>
+              <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 380, margin: '0 auto 28px' }}>
+                {course.isPremium
+                  ? 'This course requires an active Premium subscription to access all lessons.'
+                  : 'This course is free. Enroll now to unlock all lessons and track your progress.'}
+              </p>
+              {!isAuthenticated ? (
+                <a href="/auth/login" style={{ padding: '12px 28px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
+                  Log in to enroll
+                </a>
+              ) : course.isPremium ? (
+                <a href={`/subscribe?returnTo=/courses/${id}`} style={{ padding: '12px 28px', background: '#F59E0B', color: '#fff', borderRadius: 'var(--radius)', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
+                  👑 Get Premium — Free Trial
+                </a>
+              ) : (
+                <button onClick={handleEnroll} disabled={enrolling} style={{ padding: '12px 28px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                  {enrolling ? 'Enrolling…' : 'Enroll for Free'}
+                </button>
+              )}
+            </div>
           ) : currentLesson ? (
             <div>
-              {/* Lesson header */}
+              {/* Lesson viewer */}
               <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', marginBottom: 16 }}>
                 <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
@@ -354,53 +475,41 @@ export default function CourseDetailPage() {
                   </div>
                 </div>
 
-                {/* Lesson content */}
                 <div style={{ padding: '32px 28px' }}>
-                  <div style={{
-                    fontSize: 16, lineHeight: 1.9, color: 'var(--text)',
-                    whiteSpace: 'pre-wrap',
-                  }}>
+                  <div style={{ fontSize: 16, lineHeight: 1.9, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>
                     {currentLesson.content}
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div style={{ padding: '16px 28px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                   <button
                     onClick={() => prevLesson && (setActiveSection(prevLesson.sIdx), setActiveLesson(prevLesson.lIdx))}
                     disabled={!prevLesson}
-                    style={{
-                      padding: '9px 18px', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-                      background: 'var(--bg)', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
-                      cursor: prevLesson ? 'pointer' : 'not-allowed', opacity: prevLesson ? 1 : 0.4,
-                    }}
+                    style={{ padding: '9px 18px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600, cursor: prevLesson ? 'pointer' : 'not-allowed', opacity: prevLesson ? 1 : 0.4 }}
                   >← Previous</button>
 
                   <div style={{ display: 'flex', gap: 10 }}>
                     {!isCurrentDone && (
-                      <button onClick={markComplete} style={{
-                        padding: '9px 20px', borderRadius: 'var(--radius)', border: 'none',
-                        background: 'var(--green)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                      }}>✓ Mark Complete</button>
+                      <button onClick={markComplete} style={{ padding: '9px 20px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--green)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        ✓ Mark Complete
+                      </button>
                     )}
                     {nextLesson ? (
-                      <button onClick={() => { setActiveSection(nextLesson.sIdx); setActiveLesson(nextLesson.lIdx) }} style={{
-                        padding: '9px 20px', borderRadius: 'var(--radius)', border: 'none',
-                        background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                      }}>Next →</button>
+                      <button onClick={() => { setActiveSection(nextLesson.sIdx); setActiveLesson(nextLesson.lIdx) }} style={{ padding: '9px 20px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        Next →
+                      </button>
                     ) : hasQuiz ? (
-                      <Link href={`/courses/${id}/quiz`} style={{
-                        padding: '9px 20px', borderRadius: 'var(--radius)',
-                        background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none',
-                      }}>Take Quiz 🎯</Link>
+                      <Link href={`/courses/${id}/quiz`} style={{ padding: '9px 20px', borderRadius: 'var(--radius)', background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+                        Take Quiz 🎯
+                      </Link>
                     ) : null}
                   </div>
                 </div>
               </div>
 
-              {/* About this course card (shown at first lesson) */}
+              {/* About card (first lesson only) */}
               {activeSection === 0 && activeLesson === 0 && (
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px 28px', boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px 28px', boxShadow: 'var(--shadow-sm)', marginBottom: 16 }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>About this course</h3>
                   <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>{course.description}</p>
                   <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
@@ -420,6 +529,96 @@ export default function CourseDetailPage() {
               )}
             </div>
           ) : null}
+
+          {/* Reviews section */}
+          <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px 28px', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
+                Student Reviews
+                {reviewsData.totalReviews > 0 && (
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', marginLeft: 8 }}>({reviewsData.totalReviews})</span>
+                )}
+              </h3>
+              {reviewsData.totalReviews > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Stars rating={Math.round(reviewsData.averageRating)} size={16} />
+                  <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>{reviewsData.averageRating.toFixed(1)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Review form */}
+            {enrolled && !hasReviewed && (
+              <form onSubmit={handleReviewSubmit} style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '16px 20px', marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>Leave a review</div>
+
+                {/* Star picker */}
+                <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setMyRating(i)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: i <= myRating ? '#F59E0B' : '#D1D5DB', padding: 2, transition: 'color 0.1s' }}
+                    >★</button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={myComment}
+                  onChange={e => setMyComment(e.target.value)}
+                  placeholder="Share your experience (optional)"
+                  rows={3}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--text)', background: 'var(--bg)', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                />
+
+                {reviewError && (
+                  <div style={{ fontSize: 12, color: '#DC2626', marginTop: 6, fontWeight: 600 }}>{reviewError}</div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submittingReview || myRating === 0}
+                  style={{ marginTop: 10, padding: '8px 20px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 700, cursor: myRating === 0 ? 'not-allowed' : 'pointer', opacity: myRating === 0 ? 0.5 : 1 }}
+                >
+                  {submittingReview ? 'Submitting…' : 'Submit Review'}
+                </button>
+              </form>
+            )}
+
+            {/* Reviews list */}
+            {reviewsData.reviews.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: 14 }}>
+                No reviews yet. Be the first to review this course!
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {reviewsData.reviews.map(review => (
+                  <div key={review.id} style={{ paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                        {review.userName?.[0]?.toUpperCase() ?? '?'}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{review.userName}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Stars rating={review.rating} size={12} />
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0, paddingLeft: 42 }}>
+                        {review.comment}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

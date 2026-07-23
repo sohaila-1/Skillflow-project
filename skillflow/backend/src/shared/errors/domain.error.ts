@@ -35,3 +35,9 @@ export class ConflictError extends DomainError {
     super('CONFLICT', message);
   }
 }
+
+export class PaymentRequiredError extends DomainError {
+  constructor(message = 'A subscription is required to access this content') {
+    super('PAYMENT_REQUIRED', message);
+  }
+}

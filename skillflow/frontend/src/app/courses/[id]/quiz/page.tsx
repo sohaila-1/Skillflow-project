@@ -306,15 +306,26 @@ export default function QuizPage({ params }: { params: { id: string } }) {
                   ? ' Great work!'
                   : ` Need ${Math.ceil(result.total * 0.7)} correct to pass.`}
               </p>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <button onClick={handleRestart} style={{
-                  padding: '12px 24px', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600,
-                  color: 'var(--text)', background: 'var(--bg)', cursor: 'pointer',
-                }}>Retake Quiz</button>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {!result.passed && (
+                  <button onClick={handleRestart} style={{
+                    padding: '12px 24px', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600,
+                    color: 'var(--text)', background: 'var(--bg)', cursor: 'pointer',
+                  }}>Retake Quiz</button>
+                )}
+                {result.passed && (
+                  <Link href="/certificates" style={{
+                    padding: '12px 24px', background: '#7C3AED', color: '#fff',
+                    borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 700,
+                    display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none',
+                  }}>
+                    🏅 View Certificate
+                  </Link>
+                )}
                 <Link href={`/courses/${params.id}`} style={{
                   padding: '12px 24px', background: 'var(--accent)', color: '#fff',
-                  borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600, display: 'inline-block',
+                  borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600, display: 'inline-block', textDecoration: 'none',
                 }}>Back to Course →</Link>
               </div>
             </div>

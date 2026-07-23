@@ -2,6 +2,8 @@ import Link from 'next/link'
 import AuthNavActions from '../components/AuthNavActions'
 import FeaturedCoursesSection from '../components/FeaturedCoursesSection'
 import CTAButtons from '../components/CTAButtons'
+import HomeHero from '../components/HomeHero'
+import HomeNavLinks from '../components/HomeNavLinks'
 
 const FEATURES = [
   {
@@ -45,7 +47,16 @@ const FEATURES = [
 
 const PARTNERS = ['Google', 'Microsoft', 'IBM', 'Meta', 'Amazon', 'Stripe']
 
-export default function HomePage() {
+async function getCourseCount(): Promise<number> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`, { next: { revalidate: 60 } })
+    const data = await res.json() as { published?: boolean }[]
+    return data.filter(c => c.published !== false).length
+  } catch { return 0 }
+}
+
+export default async function HomePage() {
+  const courseCount = await getCourseCount()
   return (
     <div style={{ background: '#fff', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
 
@@ -55,69 +66,13 @@ export default function HomePage() {
           <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: '#1F1F1F', textDecoration: 'none', flexShrink: 0 }}>
             Skill<span style={{ color: '#0056D2' }}>Flow</span>
           </Link>
-          <div style={{ display: 'flex', gap: 28, flex: 1 }}>
-            <Link href="/courses" style={{ fontSize: 14, color: '#5C5C5C', fontWeight: 500, textDecoration: 'none' }}>Explore</Link>
-            <Link href="#how-it-works" style={{ fontSize: 14, color: '#5C5C5C', fontWeight: 500, textDecoration: 'none' }}>How it works</Link>
-          </div>
+          <HomeNavLinks />
           <AuthNavActions />
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section style={{ background: '#F5F7F8', padding: '72px 0 64px', borderBottom: '1px solid #E0E0E0' }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#1F1F1F', marginBottom: 20 }}>
-              Learn without<br />limits
-            </h1>
-            <p style={{ fontSize: 16, color: '#5C5C5C', lineHeight: 1.7, marginBottom: 32, maxWidth: 440 }}>
-              Start, switch, or advance your career with free online courses from top instructors. Get certificates and build real skills.
-            </p>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/auth/register" style={{ padding: '12px 24px', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
-                Join for Free
-              </Link>
-              <Link href="/courses" style={{ padding: '12px 24px', background: '#fff', color: '#1F1F1F', border: '2px solid #1F1F1F', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
-                Browse Courses
-              </Link>
-            </div>
-          </div>
-
-          {/* Right — clean card mockup */}
-          <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8, padding: 28, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#0056D2', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Your Learning · Progress</div>
-
-            {[
-              { title: 'Python for Beginners', cat: 'Programming', pct: 65, color: '#0056D2' },
-              { title: 'Web Dev with React',   cat: 'Web Development', pct: 30, color: '#0891B2' },
-              { title: 'Data Science',         cat: 'Data Science', pct: 100, color: '#16A34A' },
-            ].map((c, i) => (
-              <div key={i} style={{ paddingBottom: i < 2 ? 18 : 0, marginBottom: i < 2 ? 18 : 0, borderBottom: i < 2 ? '1px solid #F0F0F0' : 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1F1F1F', marginBottom: 2 }}>{c.title}</div>
-                    <div style={{ fontSize: 11, color: '#5C5C5C' }}>{c.cat}</div>
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: c.pct === 100 ? '#16A34A' : '#0056D2' }}>{c.pct}%</span>
-                </div>
-                <div style={{ height: 5, background: '#F0F0F0', borderRadius: 10, overflow: 'hidden' }}>
-                  <div style={{ width: `${c.pct}%`, height: '100%', background: c.pct === 100 ? '#16A34A' : c.color, borderRadius: 10 }} />
-                </div>
-              </div>
-            ))}
-
-            <div style={{ marginTop: 20, padding: '12px 16px', background: '#FFF8E6', border: '1px solid #F59E0B', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
-              </svg>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>Certificate Earned</div>
-                <div style={{ fontSize: 11, color: '#B45309' }}>Data Science · Score 90%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── Hero (auth-aware) ── */}
+      <HomeHero />
 
       {/* ── Partners ── */}
       <section style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', padding: '20px 0' }}>
@@ -144,39 +99,16 @@ export default function HomePage() {
       <section style={{ background: '#F5F7F8', borderTop: '1px solid #E0E0E0', borderBottom: '1px solid #E0E0E0', padding: '52px 0' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0 }}>
           {[
-            { value: '10,000+', label: 'Active learners' },
-            { value: '5',       label: 'Available courses' },
-            { value: '100%',    label: 'Free access' },
-            { value: '4.9',     label: 'Average rating' },
+            { value: '10,000+',                      label: 'Active learners' },
+            { value: courseCount > 0 ? `${courseCount}+` : '12+', label: 'Available courses' },
+            { value: '100%',                          label: 'Free access' },
+            { value: '4.9',                           label: 'Average rating' },
           ].map((s, i) => (
             <div key={s.label} style={{ textAlign: 'center', padding: '0 24px', borderRight: i < 3 ? '1px solid #E0E0E0' : 'none' }}>
               <div style={{ fontSize: 'clamp(28px,3vw,40px)', fontWeight: 800, color: '#0056D2', fontFamily: 'var(--font-heading)', marginBottom: 6 }}>{s.value}</div>
               <div style={{ fontSize: 14, color: '#5C5C5C' }}>{s.label}</div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section id="how-it-works" style={{ background: '#fff', padding: '72px 0' }}>
-        <div className="container">
-          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: '#1F1F1F', marginBottom: 48, letterSpacing: '-0.01em' }}>How SkillFlow works</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 40 }}>
-            {[
-              { n: '1', title: 'Create an account', desc: 'Sign up in seconds, completely free.' },
-              { n: '2', title: 'Pick a course',     desc: 'Browse our catalog and enroll instantly.' },
-              { n: '3', title: 'Learn at your pace', desc: 'Go through lessons on your schedule.' },
-              { n: '4', title: 'Get your certificate', desc: 'Pass the quiz and receive your certificate.' },
-            ].map(s => (
-              <div key={s.n}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#EFF6FF', border: '2px solid #0056D2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#0056D2', fontFamily: 'var(--font-heading)', marginBottom: 16 }}>
-                  {s.n}
-                </div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1F1F1F', marginBottom: 8 }}>{s.title}</h3>
-                <p style={{ fontSize: 14, color: '#5C5C5C', lineHeight: 1.6 }}>{s.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

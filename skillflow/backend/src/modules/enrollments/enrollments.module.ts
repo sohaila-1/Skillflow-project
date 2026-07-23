@@ -7,9 +7,11 @@ import { EnrollUseCase } from './application/enroll.use-case';
 import { ListMyEnrollmentsUseCase } from './application/list-my-enrollments.use-case';
 import { UnenrollUseCase } from './application/unenroll.use-case';
 import { EnrollmentsController } from './presentation/enrollments.controller';
+import { CoursesModule } from '@modules/courses/courses.module';
+import { SubscriptionsModule } from '@modules/subscriptions/subscriptions.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Enrollment])],
+  imports: [TypeOrmModule.forFeature([Enrollment]), CoursesModule, SubscriptionsModule],
   controllers: [EnrollmentsController],
   providers: [
     EnrollUseCase,
@@ -20,5 +22,6 @@ import { EnrollmentsController } from './presentation/enrollments.controller';
       useClass: EnrollmentTypeOrmRepository,
     },
   ],
+  exports: [ENROLLMENT_REPOSITORY],
 })
 export class EnrollmentsModule {}

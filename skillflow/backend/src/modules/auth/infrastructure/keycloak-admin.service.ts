@@ -127,16 +127,29 @@ export class KeycloakAdminService {
     }
   }
 
-  async sendTotpSetupEmail(userId: string): Promise<void> {
-    const res = await this.adminFetch(`/users/${userId}/execute-actions-email`, {
+  async setRequiredAction(userId: string, action: string): Promise<void> {
+    const user = await this.getUser(userId);
+    const existing: string[] = (user as unknown as { requiredActions?: string[] }).requiredActions ?? [];
+    if (existing.includes(action)) return;
+    const res = await this.adminFetch(`/users/${userId}`, {
       method: 'PUT',
-      body: JSON.stringify(['CONFIGURE_TOTP']),
+      body: JSON.stringify({ ...user, requiredActions: [...existing, action] }),
     });
     if (!res.ok) {
       const text = await res.text();
-      this.logger.error(`TOTP setup email failed: ${res.status} — ${text}`);
-      throw new InternalServerErrorException('Failed to send 2FA setup email');
+      this.logger.error(`setRequiredAction failed: ${res.status} — ${text}`);
+      throw new InternalServerErrorException('Failed to set required action');
     }
+  }
+
+  async clearRequiredAction(userId: string, action: string): Promise<void> {
+    const user = await this.getUser(userId);
+    const existing: string[] = (user as unknown as { requiredActions?: string[] }).requiredActions ?? [];
+    const res = await this.adminFetch(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...user, requiredActions: existing.filter((a) => a !== action) }),
+    });
+    if (!res.ok) throw new InternalServerErrorException('Failed to clear required action');
   }
 
   async sendPasswordResetEmail(userId: string): Promise<void> {
@@ -219,10 +232,12 @@ export class KeycloakAdminService {
 
   async verifyPassword(username: string, password: string): Promise<boolean> {
     const url = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`;
+    // Use the public frontend client for ROPC — backend confidential clients
+    // don't have Direct Access Grants enabled and reject client_secret on public flows.
+    const frontendClientId = this.config.get<string>('KEYCLOAK_FRONTEND_CLIENT_ID', 'skillflow-frontend');
     const body = new URLSearchParams({
       grant_type: 'password',
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
+      client_id: frontendClientId,
       username,
       password,
     });

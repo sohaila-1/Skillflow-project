@@ -1,4 +1,5 @@
 import { Controller, Get, Delete, Post, Patch, Body, HttpCode, HttpStatus, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,6 +54,7 @@ class UploadAvatarDto {
 export class AuthController {
   constructor(
     private readonly adminService: KeycloakAdminService,
+    private readonly config: ConfigService,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
@@ -75,10 +77,19 @@ export class AuthController {
 
   @Post('2fa/setup')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send 2FA setup link to user email via Keycloak' })
-  async setupTotp(@CurrentUser() user: AuthenticatedUser): Promise<{ ok: boolean; email: string }> {
-    await this.adminService.sendTotpSetupEmail(user.sub);
-    return { ok: true, email: user.email };
+  @ApiOperation({ summary: 'Set CONFIGURE_TOTP required action and return Keycloak login URL' })
+  async setupTotp(@CurrentUser() user: AuthenticatedUser): Promise<{ loginUrl: string }> {
+    await this.adminService.setRequiredAction(user.sub, 'CONFIGURE_TOTP');
+    const issuer = this.config.get('KEYCLOAK_ISSUER', 'http://localhost:8080');
+    const realm  = this.config.get('KEYCLOAK_REALM', 'skillflow');
+    const redirectUri = encodeURIComponent(
+      `${this.config.get('FRONTEND_URL', 'http://localhost:4000')}/account`,
+    );
+    const loginUrl =
+      `${issuer}/realms/${realm}/protocol/openid-connect/auth` +
+      `?client_id=skillflow-frontend&redirect_uri=${redirectUri}` +
+      `&response_type=code&scope=openid&prompt=login`;
+    return { loginUrl };
   }
 
   @Delete('2fa')

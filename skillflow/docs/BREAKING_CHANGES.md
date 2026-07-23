@@ -40,7 +40,39 @@ Après confirmation que plus aucun client n'utilise `/v1`, supprimer le contrôl
 
 ## Exemple de démonstration (rendu final)
 
-La route `GET /v1/courses/:id` retourne `{ title, description }`.  
-La route `GET /v2/courses/:id` retourne `{ title, description, instructorName, lessonsCount }`.
+La route `GET /v1/courses/:id` retourne la réponse complète avec le tableau `sections[]` contenant toutes les leçons.
+
+La route `GET /v2/courses/:id` retourne une réponse enrichie et restructurée :
+
+```json
+{
+  "id": "...",
+  "title": "Python for Beginners",
+  "description": "...",
+  "category": "Programming",
+  "level": "Beginner",
+  "published": true,
+  "curriculum": [
+    { "sectionTitle": "Introduction", "lessonCount": 3, "totalDurationMinutes": 45 }
+  ],
+  "stats": {
+    "totalSections": 4,
+    "totalLessons": 12,
+    "totalDurationMinutes": 180
+  }
+}
+```
+
+Les sections détaillées (`sections[].lessons[]`) sont supprimées et remplacées par `curriculum[]` (résumé par section) et `stats` (agrégats globaux). C'est un **breaking change** : un client qui accède aux leçons via `sections[].lessons[]` sera cassé.
 
 Le frontend peut être déployé en version v1 ou v2 sans redéploiement du backend.
+
+## Vérification rapide
+
+```bash
+# v1 — retourne sections[] avec les leçons
+curl https://api.skillflow.io/v1/courses/<id>
+
+# v2 — retourne curriculum[] + stats (breaking change)
+curl https://api.skillflow.io/v2/courses/<id>
+```
