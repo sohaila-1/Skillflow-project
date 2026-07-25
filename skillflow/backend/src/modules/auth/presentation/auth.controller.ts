@@ -1,4 +1,4 @@
-import { Controller, Get, Delete, Post, Patch, Body, HttpCode, HttpStatus, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Delete, Post, Patch, Body, HttpCode, HttpStatus, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
@@ -29,6 +29,13 @@ class UpdateProfileDto {
   lastName?: string;
 }
 
+class ForgotPasswordDto {
+  @ApiProperty({ description: 'Email address of the account' })
+  @IsString()
+  @IsNotEmpty()
+  email!: string;
+}
+
 class ChangePasswordDto {
   @ApiProperty()
   @IsString()
@@ -52,6 +59,8 @@ class UploadAvatarDto {
 @ApiBearerAuth()
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly adminService: KeycloakAdminService,
     private readonly config: ConfigService,
@@ -164,6 +173,22 @@ export class AuthController {
       throw new UnauthorizedException('Current password is incorrect');
     }
     await this.adminService.resetPassword(user.sub, dto.newPassword);
+    return { ok: true };
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send password reset email (public — always returns 200 to avoid user enumeration)' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ ok: boolean }> {
+    try {
+      const user = await this.adminService.getUserByEmail(dto.email);
+      if (user) {
+        await this.adminService.sendPasswordResetEmail(user.id);
+      }
+    } catch (err) {
+      this.logger.warn(`forgot-password failed for ${dto.email}: ${err}`);
+    }
     return { ok: true };
   }
 

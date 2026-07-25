@@ -173,6 +173,13 @@ export class KeycloakAdminService {
     return res.json() as Promise<KeycloakUser[]>;
   }
 
+  async getUserByEmail(email: string): Promise<KeycloakUser | null> {
+    const res = await this.adminFetch(`/users?email=${encodeURIComponent(email)}&exact=true&max=1`);
+    if (!res.ok) return null;
+    const users = (await res.json()) as KeycloakUser[];
+    return users[0] ?? null;
+  }
+
   async getRealmRole(roleName: string): Promise<{ id: string; name: string } | null> {
     const res = await this.adminFetch(`/roles/${encodeURIComponent(roleName)}`);
     if (res.status === 404) return null;

@@ -154,7 +154,13 @@ export default function LoginPage() {
                 Create a free account
               </button>
 
-              <p style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <Link href="/auth/forgot-password" style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+                  Forgot your password?
+                </Link>
+              </div>
+
+              <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                 Authentication is secured by Keycloak.<br />
                 Your password is never stored by SkillFlow.
               </p>
