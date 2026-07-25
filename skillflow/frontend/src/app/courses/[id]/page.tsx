@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { apiFetch } from '../../../lib/api'
 import { useKeycloak } from '../../../providers/keycloak-provider'
+import ThemeToggle from '../../../components/ThemeToggle'
 
 interface Lesson {
   title: string
@@ -67,7 +68,7 @@ function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
     <span style={{ display: 'inline-flex', gap: 1 }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <span key={i} style={{ fontSize: size, color: i <= rating ? '#F59E0B' : '#D1D5DB' }}>★</span>
+        <span key={i} style={{ fontSize: size, color: i <= rating ? '#F59E0B' : 'var(--border)' }}>★</span>
       ))}
     </span>
   )
@@ -252,7 +253,7 @@ export default function CourseDetailPage() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {enrollError && (
-        <div style={{ position: 'fixed', top: 80, right: 24, zIndex: 999, background: '#DC2626', color: '#fff', padding: '10px 20px', borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600, boxShadow: 'var(--shadow)' }}>
+        <div style={{ position: 'fixed', top: 80, right: 24, zIndex: 999, background: 'var(--red)', color: '#fff', padding: '10px 20px', borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600, boxShadow: 'var(--shadow)' }}>
           {enrollError}
         </div>
       )}
@@ -264,11 +265,12 @@ export default function CourseDetailPage() {
             Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ThemeToggle />
             <Link href="/courses" style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500, textDecoration: 'none' }}>← All Courses</Link>
             {isOwner && (
               <>
-                <Link href={`/courses/${id}/edit`} style={{ padding: '6px 14px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600, background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid #BFDBFE', textDecoration: 'none' }}>Edit</Link>
-                <button onClick={handleDelete} disabled={deleting} style={{ padding: '6px 14px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600, background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', cursor: 'pointer' }}>
+                <Link href={`/courses/${id}/edit`} style={{ padding: '6px 14px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600, background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid var(--border)', textDecoration: 'none' }}>Edit</Link>
+                <button onClick={handleDelete} disabled={deleting} style={{ padding: '6px 14px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600, background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(220,38,38,0.35)', cursor: 'pointer' }}>
                   {deleting ? 'Deleting…' : 'Delete'}
                 </button>
               </>
@@ -559,7 +561,7 @@ export default function CourseDetailPage() {
                       key={i}
                       type="button"
                       onClick={() => setMyRating(i)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: i <= myRating ? '#F59E0B' : '#D1D5DB', padding: 2, transition: 'color 0.1s' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: i <= myRating ? '#F59E0B' : 'var(--border)', padding: 2, transition: 'color 0.1s' }}
                     >★</button>
                   ))}
                 </div>
@@ -573,7 +575,7 @@ export default function CourseDetailPage() {
                 />
 
                 {reviewError && (
-                  <div style={{ fontSize: 12, color: '#DC2626', marginTop: 6, fontWeight: 600 }}>{reviewError}</div>
+                  <div style={{ fontSize: 12, color: 'var(--red)', marginTop: 6, fontWeight: 600 }}>{reviewError}</div>
                 )}
 
                 <button

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { apiFetch } from '@/lib/api'
+import ThemeToggle from '@/components/ThemeToggle'
 
 interface Question {
   id: string
@@ -130,15 +131,18 @@ export default function QuizPage({ params }: { params: { id: string } }) {
         <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
           Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
         </Link>
-        <Link href={`/courses/${params.id}`} style={{
-          fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500,
-          display: 'flex', alignItems: 'center', gap: 5,
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <ThemeToggle />
+          <Link href={`/courses/${params.id}`} style={{
+            fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500,
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
           </svg>
           Back to course
-        </Link>
+          </Link>
+        </div>
       </nav>
 
       <div style={{
@@ -159,7 +163,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
             <div style={{ textAlign: 'center', padding: 60 }}>
               <div style={{
                 width: 88, height: 88, borderRadius: 'var(--radius-xl)',
-                background: '#FEF2F2', border: '1px solid #FECACA',
+                background: 'var(--red-dim)', border: '1px solid rgba(220,38,38,0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px', fontSize: 40,
               }}>🔒</div>
@@ -205,7 +209,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
             <div style={{ textAlign: 'center' }}>
               <div style={{
                 width: 80, height: 80, borderRadius: 'var(--radius-xl)',
-                background: 'var(--accent-dim)', border: '1px solid #BFDBFE',
+                background: 'var(--accent-dim)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px', fontSize: 36,
               }}>🎯</div>
@@ -217,9 +221,9 @@ export default function QuizPage({ params }: { params: { id: string } }) {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 40 }}>
                 {[
-                  { icon: '❓', label: `${quiz.questions.length} Questions`, bg: 'var(--accent-dim)', border: '#BFDBFE' },
-                  { icon: '⏱', label: 'No time limit', bg: 'var(--green-dim)', border: '#BBF7D0' },
-                  { icon: '✅', label: '70% to pass', bg: 'var(--orange-dim)', border: '#FDE68A' },
+                  { icon: '❓', label: `${quiz.questions.length} Questions`, bg: 'var(--accent-dim)', border: 'rgba(0,86,210,0.25)' },
+                  { icon: '⏱', label: 'No time limit', bg: 'var(--green-dim)', border: 'rgba(22,163,74,0.3)' },
+                  { icon: '✅', label: '70% to pass', bg: 'var(--orange-dim)', border: 'rgba(217,119,6,0.3)' },
                 ].map(s => (
                   <div key={s.label} style={{
                     background: s.bg, border: `1px solid ${s.border}`,

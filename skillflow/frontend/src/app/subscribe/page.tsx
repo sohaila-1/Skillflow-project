@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { apiFetch } from '../../lib/api'
 import { useKeycloak } from '../../providers/keycloak-provider'
+import ThemeToggle from '../../components/ThemeToggle'
 
 const FEATURES = [
   { icon: '👑', label: 'All premium courses', desc: 'Unlimited access to every premium course in the catalog' },
@@ -40,16 +41,19 @@ function SubscribeContent() {
   }
 
   return (
-    <div style={{ background: '#F5F7F8', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+    <div style={{ background: 'var(--bg-subtle)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
 
       {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', position: 'sticky', top: 0, zIndex: 100 }}>
+      <nav style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', height: 60, gap: 16 }}>
-          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: '#1F1F1F', textDecoration: 'none' }}>
-            Skill<span style={{ color: '#0056D2' }}>Flow</span>
+          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', textDecoration: 'none' }}>
+            Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
           </Link>
-          <span style={{ color: '#E0E0E0' }}>›</span>
-          <span style={{ fontSize: 14, color: '#5C5C5C', fontWeight: 500 }}>Premium</span>
+          <span style={{ color: 'var(--border)' }}>›</span>
+          <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Premium</span>
+          <div style={{ marginLeft: 'auto' }}>
+            <ThemeToggle />
+          </div>
         </div>
       </nav>
 
@@ -57,14 +61,14 @@ function SubscribeContent() {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#FFF8E6', border: '1px solid #F59E0B', borderRadius: 100, padding: '6px 16px', marginBottom: 20 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--orange-dim)', border: '1px solid rgba(217,119,6,0.4)', borderRadius: 100, padding: '6px 16px', marginBottom: 20 }}>
             <span style={{ fontSize: 16 }}>👑</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#92400E' }}>SkillFlow Premium</span>
           </div>
-          <h1 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 800, color: '#1F1F1F', letterSpacing: '-0.02em', marginBottom: 16 }}>
+          <h1 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', marginBottom: 16 }}>
             Unlock unlimited learning
           </h1>
-          <p style={{ fontSize: 16, color: '#5C5C5C', lineHeight: 1.65, maxWidth: 520, margin: '0 auto' }}>
+          <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.65, maxWidth: 520, margin: '0 auto' }}>
             Get full access to all premium courses, certificates, and future content — for one simple monthly price.
           </p>
         </div>
@@ -74,40 +78,40 @@ function SubscribeContent() {
           {/* Features grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {FEATURES.map(f => (
-              <div key={f.label} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8, padding: '20px 20px' }}>
+              <div key={f.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '20px 20px' }}>
                 <div style={{ fontSize: 24, marginBottom: 10 }}>{f.icon}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#1F1F1F', marginBottom: 5 }}>{f.label}</div>
-                <div style={{ fontSize: 13, color: '#5C5C5C', lineHeight: 1.55 }}>{f.desc}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 5 }}>{f.label}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{f.desc}</div>
               </div>
             ))}
           </div>
 
           {/* Pricing card */}
-          <div style={{ background: '#fff', border: '2px solid #0056D2', borderRadius: 12, padding: '32px 28px', boxShadow: '0 8px 32px rgba(0,86,210,0.12)', position: 'sticky', top: 80 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#0056D2', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+          <div style={{ background: 'var(--surface)', border: '2px solid var(--accent)', borderRadius: 12, padding: '32px 28px', boxShadow: 'var(--shadow)', position: 'sticky', top: 80 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
               Most popular
             </div>
 
             <div style={{ marginBottom: 6 }}>
-              <span style={{ fontSize: 42, fontWeight: 800, color: '#1F1F1F', letterSpacing: '-0.03em' }}>$9</span>
-              <span style={{ fontSize: 18, color: '#5C5C5C', fontWeight: 500 }}>.99<span style={{ fontSize: 15 }}>/month</span></span>
+              <span style={{ fontSize: 42, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.03em' }}>$9</span>
+              <span style={{ fontSize: 18, color: 'var(--text-secondary)', fontWeight: 500 }}>.99<span style={{ fontSize: 15 }}>/month</span></span>
             </div>
-            <div style={{ fontSize: 13, color: '#5C5C5C', marginBottom: 28 }}>30-day free trial · Cancel anytime</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 28 }}>30-day free trial · Cancel anytime</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
               {['All premium courses', 'Certificates of completion', 'Quizzes & progress tracking', 'New courses every month'].map(item => (
-                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#1F1F1F' }}>
-                  <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#0056D2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, flexShrink: 0 }}>✓</span>
+                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--text)' }}>
+                  <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, flexShrink: 0 }}>✓</span>
                   {item}
                 </div>
               ))}
             </div>
 
             {done ? (
-              <div style={{ textAlign: 'center', padding: '16px', background: '#DCFCE7', border: '1px solid #BBF7D0', borderRadius: 8 }}>
+              <div style={{ textAlign: 'center', padding: '16px', background: 'var(--green-dim)', border: '1px solid rgba(22,163,74,0.35)', borderRadius: 8 }}>
                 <div style={{ fontSize: 24, marginBottom: 6 }}>🎉</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#15803D' }}>Premium activated!</div>
-                <div style={{ fontSize: 13, color: '#16A34A', marginTop: 4 }}>Redirecting you now…</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--green)' }}>Premium activated!</div>
+                <div style={{ fontSize: 13, color: 'var(--green)', marginTop: 4 }}>Redirecting you now…</div>
               </div>
             ) : (
               <button
@@ -115,7 +119,7 @@ function SubscribeContent() {
                 disabled={activating}
                 style={{
                   width: '100%', padding: '14px', borderRadius: 8,
-                  background: activating ? '#93C5FD' : '#0056D2',
+                  background: activating ? 'rgba(0,86,210,0.5)' : 'var(--accent)',
                   color: '#fff', border: 'none',
                   fontSize: 16, fontWeight: 700, cursor: activating ? 'not-allowed' : 'pointer',
                   transition: 'background 0.15s',
@@ -125,7 +129,7 @@ function SubscribeContent() {
               </button>
             )}
 
-            <div style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
               No credit card required during the free trial.
             </div>
           </div>
@@ -137,7 +141,7 @@ function SubscribeContent() {
 
 export default function SubscribePage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F5F7F8' }} />}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg-subtle)' }} />}>
       <SubscribeContent />
     </Suspense>
   )

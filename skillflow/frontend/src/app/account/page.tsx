@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useKeycloak } from '../../providers/keycloak-provider'
 import { useRequireAuth } from '../../hooks/useRequireAuth'
 import { apiFetch } from '../../lib/api'
+import ThemeToggle from '../../components/ThemeToggle'
 
 interface Profile {
   username: string
@@ -20,7 +21,7 @@ function Spinner({ size = 28 }: { size?: number }) {
   return (
     <span style={{
       width: size, height: size, borderRadius: '50%',
-      border: '3px solid #E0E0E0', borderTopColor: '#0056D2',
+      border: '3px solid var(--border)', borderTopColor: 'var(--accent)',
       display: 'inline-block', animation: 'spin 0.7s linear infinite', flexShrink: 0,
     }} />
   )
@@ -29,10 +30,10 @@ function Spinner({ size = 28 }: { size?: number }) {
 function Card({ children, danger }: { children: React.ReactNode; danger?: boolean }) {
   return (
     <section style={{
-      background: '#fff',
-      border: `1px solid ${danger ? '#FECACA' : '#E0E0E0'}`,
+      background: 'var(--surface)',
+      border: `1px solid ${danger ? 'rgba(220,38,38,0.3)' : 'var(--border)'}`,
       borderRadius: 8, padding: '28px 32px', marginBottom: 20,
-      boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      boxShadow: 'var(--shadow-sm)',
     }}>
       {children}
     </section>
@@ -42,7 +43,7 @@ function Card({ children, danger }: { children: React.ReactNode; danger?: boolea
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
         {label}
       </label>
       {children}
@@ -51,8 +52,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '9px 12px', border: '1px solid #D1D5DB',
-  borderRadius: 6, fontSize: 14, color: '#1F1F1F',
+  width: '100%', padding: '9px 12px', border: '1px solid var(--border)',
+  borderRadius: 6, fontSize: 14, color: 'var(--text)',
+  background: 'var(--surface)',
   outline: 'none', boxSizing: 'border-box',
 }
 
@@ -60,9 +62,9 @@ function Alert({ msg }: { msg: Msg }) {
   return (
     <div style={{
       padding: '10px 14px', borderRadius: 6, marginBottom: 16, fontSize: 13, fontWeight: 600,
-      background: msg.ok ? '#F0FDF4' : '#FEF2F2',
-      border: `1px solid ${msg.ok ? '#BBF7D0' : '#FECACA'}`,
-      color: msg.ok ? '#15803D' : '#DC2626',
+      background: msg.ok ? 'var(--green-dim)' : 'var(--red-dim)',
+      border: `1px solid ${msg.ok ? 'rgba(22,163,74,0.35)' : 'rgba(220,38,38,0.35)'}`,
+      color: msg.ok ? 'var(--green)' : 'var(--red)',
     }}>
       {msg.text}
     </div>
@@ -75,8 +77,8 @@ export default function AccountPage() {
 
   // Avatar state
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)       // saved
-  const [pendingAvatar, setPendingAvatar] = useState<string | null>(null) // selected but not yet saved
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [pendingAvatar, setPendingAvatar] = useState<string | null>(null)
   const [avatarSaving, setAvatarSaving] = useState(false)
   const [avatarMsg, setAvatarMsg] = useState<Msg | null>(null)
 
@@ -177,7 +179,6 @@ export default function AccountPage() {
       setPendingAvatar(reader.result as string)
     }
     reader.readAsDataURL(file)
-    // reset input so the same file can be re-selected
     e.target.value = ''
   }
 
@@ -222,7 +223,6 @@ export default function AccountPage() {
     setTotpMsg(null)
     try {
       const { loginUrl } = await apiFetch<{ loginUrl: string }>('/auth/2fa/setup', { method: 'POST' })
-      // Redirect to Keycloak login — CONFIGURE_TOTP required action will fire after re-auth
       window.location.href = loginUrl
     } catch {
       setTotpMsg({ text: 'Failed to initiate 2FA setup. Please try again.', ok: false })
@@ -246,7 +246,7 @@ export default function AccountPage() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F7F8' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
         <Spinner size={36} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -257,18 +257,24 @@ export default function AccountPage() {
   const initials = displayName.charAt(0).toUpperCase()
 
   return (
-    <div style={{ background: '#F5F7F8', minHeight: '100vh' }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } } input:focus { border-color: #0056D2 !important; box-shadow: 0 0 0 3px rgba(0,86,210,0.1); }`}</style>
+    <div style={{ background: 'var(--bg-subtle)', minHeight: '100vh' }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-dim); }
+      `}</style>
 
       {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', position: 'sticky', top: 0, zIndex: 50 }}>
+      <nav style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 50 }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
-          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: '#1F1F1F', textDecoration: 'none' }}>
-            Skill<span style={{ color: '#0056D2' }}>Flow</span>
+          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', textDecoration: 'none' }}>
+            Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
           </Link>
-          <Link href="/dashboard" style={{ fontSize: 14, color: '#5C5C5C', fontWeight: 500, textDecoration: 'none' }}>
-            ← Dashboard
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <ThemeToggle />
+            <Link href="/dashboard" style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500, textDecoration: 'none' }}>
+              ← Dashboard
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -278,39 +284,36 @@ export default function AccountPage() {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, marginBottom: 32 }}>
           {/* Avatar */}
           <div style={{ flexShrink: 0 }}>
-            {/* Circle */}
             <div style={{ position: 'relative', width: 80, height: 80, marginBottom: 10 }}>
               <div style={{
                 width: 80, height: 80, borderRadius: '50%',
-                background: (pendingAvatar ?? avatarUrl) ? 'transparent' : '#0056D2',
+                background: (pendingAvatar ?? avatarUrl) ? 'transparent' : 'var(--accent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 800, fontSize: 30, color: '#fff',
-                overflow: 'hidden', border: '3px solid #E0E0E0',
+                overflow: 'hidden', border: '3px solid var(--border)',
               }}>
                 {(pendingAvatar ?? avatarUrl)
                   ? <img src={pendingAvatar ?? avatarUrl!} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : initials}
               </div>
-              {/* Remove badge — only when saved avatar exists and no pending change */}
               {avatarUrl && !pendingAvatar && (
                 <button onClick={removeAvatar} disabled={avatarSaving} title="Remove photo" style={{
                   position: 'absolute', top: 0, right: 0,
                   width: 22, height: 22, borderRadius: '50%',
-                  background: '#DC2626', border: '2px solid #fff',
+                  background: 'var(--red)', border: '2px solid var(--bg)',
                   color: '#fff', fontSize: 13, fontWeight: 700,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>×</button>
               )}
             </div>
 
-            {/* Pending: Save / Cancel */}
             {pendingAvatar ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <button
                   onClick={saveAvatar}
                   disabled={avatarSaving}
                   style={{
-                    padding: '7px 16px', background: '#0056D2', color: '#fff',
+                    padding: '7px 16px', background: 'var(--accent)', color: '#fff',
                     border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 700,
                     cursor: avatarSaving ? 'not-allowed' : 'pointer',
                     opacity: avatarSaving ? 0.7 : 1,
@@ -324,8 +327,8 @@ export default function AccountPage() {
                   onClick={cancelAvatar}
                   disabled={avatarSaving}
                   style={{
-                    padding: '7px 16px', background: '#F5F7F8', color: '#374151',
-                    border: '1px solid #E0E0E0', borderRadius: 6, fontSize: 13, fontWeight: 600,
+                    padding: '7px 16px', background: 'var(--bg-alt)', color: 'var(--text)',
+                    border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, fontWeight: 600,
                     cursor: 'pointer',
                   }}
                 >
@@ -338,13 +341,13 @@ export default function AccountPage() {
                 disabled={avatarSaving}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '7px 14px', background: '#F5F7F8',
-                  border: '1px solid #E0E0E0', borderRadius: 6,
-                  fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer',
+                  padding: '7px 14px', background: 'var(--bg-alt)',
+                  border: '1px solid var(--border)', borderRadius: 6,
+                  fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer',
                   width: 80,
                 }}
               >
-                <CameraIcon color="#374151" /> Edit
+                <CameraIcon /> Edit
               </button>
             )}
 
@@ -358,15 +361,15 @@ export default function AccountPage() {
           </div>
 
           <div style={{ paddingTop: 4 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#1F1F1F', marginBottom: 4 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)', marginBottom: 4 }}>
               Account &amp; Security
             </h1>
-            <p style={{ color: '#6B7280', fontSize: 14, marginBottom: 4 }}>{profile?.email ?? user?.email}</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 4 }}>{profile?.email ?? user?.email}</p>
             {pendingAvatar && !avatarSaving && (
-              <p style={{ fontSize: 12, color: '#0056D2', fontWeight: 600 }}>New photo selected — click Save photo to confirm.</p>
+              <p style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>New photo selected — click Save photo to confirm.</p>
             )}
             {avatarMsg && !pendingAvatar && (
-              <p style={{ fontSize: 12, fontWeight: 600, color: avatarMsg.ok ? '#15803D' : '#DC2626' }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: avatarMsg.ok ? 'var(--green)' : 'var(--red)' }}>
                 {avatarMsg.text}
               </p>
             )}
@@ -375,7 +378,7 @@ export default function AccountPage() {
 
         {/* ── Profile ── */}
         <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1F1F1F', marginBottom: 20 }}>Profile</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 20 }}>Profile</h2>
           {profileLoading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner /></div>
           ) : (
@@ -400,16 +403,16 @@ export default function AccountPage() {
                 </Field>
               </div>
               <Field label="Username">
-                <input value={profile?.username ?? ''} disabled style={{ ...inputStyle, background: '#F9FAFB', color: '#6B7280' }} />
+                <input value={profile?.username ?? ''} disabled style={{ ...inputStyle, background: 'var(--bg-subtle)', color: 'var(--text-muted)' }} />
               </Field>
               <Field label="Email">
-                <input value={profile?.email ?? ''} disabled style={{ ...inputStyle, background: '#F9FAFB', color: '#6B7280' }} />
+                <input value={profile?.email ?? ''} disabled style={{ ...inputStyle, background: 'var(--bg-subtle)', color: 'var(--text-muted)' }} />
               </Field>
               <button
                 type="submit"
                 disabled={profileSaving}
                 style={{
-                  marginTop: 4, padding: '10px 24px', background: '#0056D2', color: '#fff',
+                  marginTop: 4, padding: '10px 24px', background: 'var(--accent)', color: '#fff',
                   border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 700,
                   cursor: profileSaving ? 'not-allowed' : 'pointer', opacity: profileSaving ? 0.7 : 1,
                   display: 'flex', alignItems: 'center', gap: 8,
@@ -424,8 +427,8 @@ export default function AccountPage() {
 
         {/* ── Password ── */}
         <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1F1F1F', marginBottom: 6 }}>Change Password</h2>
-          <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Change Password</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
             Must be at least 8 characters.
           </p>
           <form onSubmit={changePassword}>
@@ -441,7 +444,7 @@ export default function AccountPage() {
                   style={{ ...inputStyle, paddingRight: 40 }}
                 />
                 <button type="button" onClick={() => setShowCurrentPwd(v => !v)}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF' }}>
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                   {showCurrentPwd ? <EyeOff /> : <Eye />}
                 </button>
               </div>
@@ -458,7 +461,7 @@ export default function AccountPage() {
                   style={{ ...inputStyle, paddingRight: 40 }}
                 />
                 <button type="button" onClick={() => setShowNewPwd(v => !v)}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF' }}>
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                   {showNewPwd ? <EyeOff /> : <Eye />}
                 </button>
               </div>
@@ -472,18 +475,18 @@ export default function AccountPage() {
                 required
                 style={{
                   ...inputStyle,
-                  borderColor: confirmPwd && confirmPwd !== newPwd ? '#DC2626' : '#D1D5DB',
+                  borderColor: confirmPwd && confirmPwd !== newPwd ? 'var(--red)' : 'var(--border)',
                 }}
               />
               {confirmPwd && confirmPwd !== newPwd && (
-                <p style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>Passwords do not match</p>
+                <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 4 }}>Passwords do not match</p>
               )}
             </Field>
             <button
               type="submit"
               disabled={pwdSaving || (!!confirmPwd && confirmPwd !== newPwd)}
               style={{
-                marginTop: 4, padding: '10px 24px', background: '#0056D2', color: '#fff',
+                marginTop: 4, padding: '10px 24px', background: 'var(--accent)', color: '#fff',
                 border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 700,
                 cursor: pwdSaving ? 'not-allowed' : 'pointer', opacity: pwdSaving ? 0.7 : 1,
                 display: 'flex', alignItems: 'center', gap: 8,
@@ -498,19 +501,19 @@ export default function AccountPage() {
         {/* ── 2FA ── */}
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#1F1F1F' }}>Two-Factor Authentication</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Two-Factor Authentication</h2>
             {totpLoading ? <Spinner size={18} /> : (
               <span style={{
                 padding: '4px 12px', borderRadius: 100, fontSize: 12, fontWeight: 700,
-                background: totpEnabled ? '#F0FDF4' : '#F9FAFB',
-                color: totpEnabled ? '#15803D' : '#6B7280',
-                border: `1px solid ${totpEnabled ? '#BBF7D0' : '#E0E0E0'}`,
+                background: totpEnabled ? 'var(--green-dim)' : 'var(--bg-subtle)',
+                color: totpEnabled ? 'var(--green)' : 'var(--text-muted)',
+                border: `1px solid ${totpEnabled ? 'rgba(22,163,74,0.35)' : 'var(--border)'}`,
               }}>
                 {totpEnabled ? 'Enabled' : 'Disabled'}
               </span>
             )}
           </div>
-          <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 20 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
             Use an authenticator app (Google Authenticator, Aegis…) to add an extra layer of security.
           </p>
           {totpMsg && <Alert msg={totpMsg} />}
@@ -520,7 +523,7 @@ export default function AccountPage() {
                 onClick={setupTotp}
                 disabled={totpSaving}
                 style={{
-                  padding: '10px 20px', background: '#0056D2', color: '#fff',
+                  padding: '10px 20px', background: 'var(--accent)', color: '#fff',
                   border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 700,
                   cursor: totpSaving ? 'not-allowed' : 'pointer', opacity: totpSaving ? 0.7 : 1,
                   display: 'flex', alignItems: 'center', gap: 8,
@@ -535,8 +538,8 @@ export default function AccountPage() {
                 onClick={disableTotp}
                 disabled={totpSaving}
                 style={{
-                  padding: '10px 20px', background: '#FEF2F2', color: '#DC2626',
-                  border: '1px solid #FECACA', borderRadius: 6, fontSize: 13, fontWeight: 700,
+                  padding: '10px 20px', background: 'var(--red-dim)', color: 'var(--red)',
+                  border: '1px solid rgba(220,38,38,0.35)', borderRadius: 6, fontSize: 13, fontWeight: 700,
                   cursor: totpSaving ? 'not-allowed' : 'pointer', opacity: totpSaving ? 0.6 : 1,
                   display: 'flex', alignItems: 'center', gap: 8,
                 }}
@@ -550,13 +553,13 @@ export default function AccountPage() {
 
         {/* ── Sign out ── */}
         <Card danger>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#DC2626', marginBottom: 6 }}>Sign out</h2>
-          <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 18 }}>End your current session.</p>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--red)', marginBottom: 6 }}>Sign out</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 18 }}>End your current session.</p>
           <button
             onClick={logout}
             style={{
-              padding: '10px 20px', background: '#FEF2F2', color: '#DC2626',
-              border: '1px solid #FECACA', borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              padding: '10px 20px', background: 'var(--red-dim)', color: 'var(--red)',
+              border: '1px solid rgba(220,38,38,0.35)', borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer',
             }}
           >
             Sign out of SkillFlow
@@ -600,9 +603,9 @@ function TrashIcon() {
   )
 }
 
-function CameraIcon({ color = '#fff' }: { color?: string }) {
+function CameraIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
       <circle cx="12" cy="13" r="4"/>
     </svg>

@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { apiFetch } from '../../../lib/api'
 import { useRequireAuth } from '../../../hooks/useRequireAuth'
+import ThemeToggle from '../../../components/ThemeToggle'
 
 interface Lesson  { title: string; duration: string; content: string }
 interface Section { title: string; lessons: Lesson[] }
 
-const INPUT = { width: '100%', padding: '9px 12px', border: '1px solid #E0E0E0', borderRadius: 4, fontSize: 14, color: '#1F1F1F', background: '#fff', boxSizing: 'border-box' as const }
-const LABEL = { display: 'block', fontSize: 13, fontWeight: 600, color: '#5C5C5C', marginBottom: 6 } as const
+const INPUT: React.CSSProperties = { width: '100%', padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, color: 'var(--text)', background: 'var(--surface)', boxSizing: 'border-box' }
+const LABEL: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }
 
 function emptyLesson(): Lesson { return { title: '', duration: '10 min', content: '' } }
 function emptySection(): Section { return { title: '', lessons: [emptyLesson()] } }
@@ -62,24 +63,27 @@ export default function NewCoursePage() {
   }
 
   return (
-    <div style={{ background: '#F5F7F8', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
-      <nav style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', height: 56, display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
+    <div style={{ background: 'var(--bg-subtle)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+      <nav style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', height: 56, display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: '#1F1F1F', textDecoration: 'none' }}>
-            Skill<span style={{ color: '#0056D2' }}>Flow</span>
+          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', textDecoration: 'none' }}>
+            Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
           </Link>
-          <Link href="/courses" style={{ fontSize: 14, color: '#5C5C5C', fontWeight: 500, textDecoration: 'none' }}>← All courses</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <ThemeToggle />
+            <Link href="/courses" style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500, textDecoration: 'none' }}>← All courses</Link>
+          </div>
         </div>
       </nav>
 
       <div className="container" style={{ maxWidth: 760, paddingTop: 40, paddingBottom: 80 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1F1F1F', letterSpacing: '-0.02em', marginBottom: 4 }}>Create a New Course</h1>
-        <p style={{ fontSize: 14, color: '#5C5C5C', marginBottom: 36 }}>Add course details, organize it into sections, and publish for learners.</p>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', marginBottom: 4 }}>Create a New Course</h1>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 36 }}>Add course details, organize it into sections, and publish for learners.</p>
 
         <form onSubmit={handleSubmit}>
           {/* ── Course Info ── */}
-          <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 28, marginBottom: 20 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1F1F1F', marginBottom: 20 }}>Course Info</h2>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: 28, marginBottom: 20 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 20 }}>Course Info</h2>
 
             <div style={{ marginBottom: 16 }}>
               <label style={LABEL}>Title *</label>
@@ -105,44 +109,44 @@ export default function NewCoursePage() {
               </div>
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-              <input type="checkbox" checked={form.published} onChange={e => setForm(f => ({ ...f, published: e.target.checked }))} style={{ width: 16, height: 16, accentColor: '#0056D2' }} />
-              <span style={{ fontSize: 14, color: '#5C5C5C' }}>Publish immediately (visible to all learners)</span>
+              <input type="checkbox" checked={form.published} onChange={e => setForm(f => ({ ...f, published: e.target.checked }))} style={{ width: 16, height: 16, accentColor: 'var(--accent)' }} />
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Publish immediately (visible to all learners)</span>
             </label>
           </div>
 
           {/* ── Sections & Lessons ── */}
-          <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 28, marginBottom: 20 }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: 28, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div>
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1F1F1F', marginBottom: 2 }}>Sections & Lessons</h2>
-                <p style={{ fontSize: 13, color: '#9CA3AF' }}>Organize your course into sections, each with lessons.</p>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>Sections & Lessons</h2>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Organize your course into sections, each with lessons.</p>
               </div>
-              <button type="button" onClick={addSection} style={{ padding: '7px 16px', background: '#EFF6FF', color: '#0056D2', border: '1px solid #BFDBFE', borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <button type="button" onClick={addSection} style={{ padding: '7px 16px', background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid var(--border)', borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 + Add Section
               </button>
             </div>
 
             {sections.map((sec, si) => (
-              <div key={si} style={{ border: '1px solid #E0E0E0', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#F5F7F8', borderBottom: '1px solid #E0E0E0' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0056D2', background: '#EFF6FF', padding: '2px 8px', borderRadius: 3, flexShrink: 0 }}>
+              <div key={si} style={{ border: '1px solid var(--border)', borderRadius: 4, marginBottom: 16, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-dim)', padding: '2px 8px', borderRadius: 3, flexShrink: 0 }}>
                     Section {si + 1}
                   </span>
                   <input
                     value={sec.title}
                     onChange={e => updateSection(si, e.target.value)}
                     placeholder="Section title (e.g. Getting Started)"
-                    style={{ flex: 1, padding: '7px 10px', border: '1px solid #E0E0E0', borderRadius: 4, fontSize: 14, color: '#1F1F1F', background: '#fff' }}
+                    style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, color: 'var(--text)', background: 'var(--surface)' }}
                   />
                   {sections.length > 1 && (
-                    <button type="button" onClick={() => removeSection(si)} style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>Remove</button>
+                    <button type="button" onClick={() => removeSection(si)} style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>Remove</button>
                   )}
                 </div>
 
                 <div style={{ padding: '16px 16px 12px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px auto', gap: 0, marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lesson</span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Duration</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lesson</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Duration</span>
                     <span />
                   </div>
 
@@ -170,12 +174,12 @@ export default function NewCoursePage() {
                         style={INPUT}
                       />
                       {sec.lessons.length > 1 && (
-                        <button type="button" onClick={() => removeLesson(si, li)} title="Remove lesson" style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 20, lineHeight: 1, paddingTop: 8 }}>×</button>
+                        <button type="button" onClick={() => removeLesson(si, li)} title="Remove lesson" style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: 20, lineHeight: 1, paddingTop: 8 }}>×</button>
                       )}
                     </div>
                   ))}
 
-                  <button type="button" onClick={() => addLesson(si)} style={{ background: 'none', border: '1px dashed #BFDBFE', borderRadius: 4, color: '#0056D2', cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: '6px 14px', width: '100%' }}>
+                  <button type="button" onClick={() => addLesson(si)} style={{ background: 'none', border: '1px dashed var(--border)', borderRadius: 4, color: 'var(--accent)', cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: '6px 14px', width: '100%' }}>
                     + Add Lesson
                   </button>
                 </div>
@@ -184,14 +188,14 @@ export default function NewCoursePage() {
           </div>
 
           {error && (
-            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 4, padding: '10px 14px', marginBottom: 16, fontSize: 14, color: '#DC2626' }}>{error}</div>
+            <div style={{ background: 'var(--red-dim)', border: '1px solid rgba(220,38,38,0.35)', borderRadius: 4, padding: '10px 14px', marginBottom: 16, fontSize: 14, color: 'var(--red)' }}>{error}</div>
           )}
 
           <div style={{ display: 'flex', gap: 12 }}>
-            <button type="submit" disabled={submitting} style={{ flex: 1, padding: '12px', background: '#0056D2', color: '#fff', border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
+            <button type="submit" disabled={submitting} style={{ flex: 1, padding: '12px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
               {submitting ? 'Creating…' : 'Create Course'}
             </button>
-            <Link href="/courses" style={{ padding: '12px 20px', border: '1px solid #E0E0E0', borderRadius: 4, fontSize: 14, fontWeight: 500, color: '#5C5C5C', background: '#fff', textDecoration: 'none' }}>
+            <Link href="/courses" style={{ padding: '12px 20px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', background: 'var(--bg-alt)', textDecoration: 'none' }}>
               Cancel
             </Link>
           </div>

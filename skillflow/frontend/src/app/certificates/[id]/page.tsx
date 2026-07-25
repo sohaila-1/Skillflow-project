@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { apiFetch } from '../../../lib/api'
 import { useRequireAuth } from '../../../hooks/useRequireAuth'
+import ThemeToggle from '../../../components/ThemeToggle'
 
 interface Certificate {
   id: string
@@ -31,16 +32,16 @@ export default function CertificatePage() {
   }, [id])
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F0FF' }}>
-      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #DDD6FE', borderTopColor: '#7C3AED', animation: 'spin 0.7s linear infinite' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-subtle)' }}>
+      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: '#7C3AED', animation: 'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 
   if (error || !cert) return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F5F0FF', gap: 16 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-subtle)', gap: 16 }}>
       <div style={{ fontSize: 48 }}>📭</div>
-      <div style={{ fontSize: 18, fontWeight: 700 }}>Certificate not found</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Certificate not found</div>
       <Link href="/certificates" style={{ color: '#7C3AED', fontWeight: 600 }}>← Back to certificates</Link>
     </div>
   )
@@ -49,7 +50,7 @@ export default function CertificatePage() {
   const date = new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div style={{ background: '#F5F0FF', minHeight: '100vh', padding: '32px 24px' }}>
+    <div style={{ background: 'var(--bg-subtle)', minHeight: '100vh', padding: '32px 24px' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @media print {
@@ -61,9 +62,12 @@ export default function CertificatePage() {
 
       {/* Action bar */}
       <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: 860, margin: '0 auto 28px' }}>
-        <Link href="/certificates" style={{ fontSize: 14, color: '#7C3AED', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
-          ← My Certificates
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <ThemeToggle />
+          <Link href="/certificates" style={{ fontSize: 14, color: '#7C3AED', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+            ← My Certificates
+          </Link>
+        </div>
         <button
           onClick={() => window.print()}
           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 22px', background: '#7C3AED', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
