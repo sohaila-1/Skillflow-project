@@ -126,36 +126,23 @@ export default function HomeHero() {
             </div>
           </div>
 
-          {/* Mock progress card */}
-          <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8, padding: 28, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#0056D2', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Your Learning · Progress</div>
+          {/* Category showcase */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {[
-              { title: 'Python for Beginners', cat: 'Programming',     pct: 65,  color: '#0056D2' },
-              { title: 'Web Dev with React',   cat: 'Web Development', pct: 30,  color: '#0891B2' },
-              { title: 'Data Science',         cat: 'Data Science',    pct: 100, color: '#16A34A' },
-            ].map((c, i) => (
-              <div key={i} style={{ paddingBottom: i < 2 ? 18 : 0, marginBottom: i < 2 ? 18 : 0, borderBottom: i < 2 ? '1px solid #F0F0F0' : 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1F1F1F', marginBottom: 2 }}>{c.title}</div>
-                    <div style={{ fontSize: 11, color: '#5C5C5C' }}>{c.cat}</div>
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: c.pct === 100 ? '#16A34A' : '#0056D2' }}>{c.pct}%</span>
+              { icon: '💻', label: 'Programming',     color: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
+              { icon: '🌐', label: 'Web Development', color: '#F0FDFA', border: '#99F6E4', text: '#0F766E' },
+              { icon: '📊', label: 'Data Science',    color: '#F0FDF4', border: '#BBF7D0', text: '#15803D' },
+              { icon: '🐳', label: 'DevOps',          color: '#FEF2F2', border: '#FECACA', text: '#B91C1C' },
+              { icon: '🎨', label: 'Design',          color: '#FFFBEB', border: '#FDE68A', text: '#92400E' },
+              { icon: '📚', label: 'General',         color: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' },
+            ].map(cat => (
+              <Link key={cat.label} href={`/courses`} style={{ textDecoration: 'none' }}>
+                <div style={{ background: cat.color, border: `1px solid ${cat.border}`, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, transition: 'transform 0.15s', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 22 }}>{cat.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: cat.text }}>{cat.label}</span>
                 </div>
-                <div style={{ height: 5, background: '#F0F0F0', borderRadius: 10, overflow: 'hidden' }}>
-                  <div style={{ width: `${c.pct}%`, height: '100%', background: c.pct === 100 ? '#16A34A' : c.color, borderRadius: 10 }} />
-                </div>
-              </div>
+              </Link>
             ))}
-            <div style={{ marginTop: 20, padding: '12px 16px', background: '#FFF8E6', border: '1px solid #F59E0B', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
-              </svg>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>Certificate Earned</div>
-                <div style={{ fontSize: 11, color: '#B45309' }}>Data Science · Score 90%</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>

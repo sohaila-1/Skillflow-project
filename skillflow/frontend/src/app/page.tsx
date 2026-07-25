@@ -5,12 +5,45 @@ import CTAButtons from '../components/CTAButtons'
 import HomeHero from '../components/HomeHero'
 import HomeNavLinks from '../components/HomeNavLinks'
 
+const CATEGORIES = [
+  { icon: '💻', label: 'Programming',     color: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8', bg: '#0056D2' },
+  { icon: '🌐', label: 'Web Development', color: '#F0FDFA', border: '#99F6E4', text: '#0F766E', bg: '#0891B2' },
+  { icon: '📊', label: 'Data Science',    color: '#F0FDF4', border: '#BBF7D0', text: '#15803D', bg: '#16A34A' },
+  { icon: '🐳', label: 'DevOps',          color: '#FEF2F2', border: '#FECACA', text: '#B91C1C', bg: '#DC2626' },
+  { icon: '🎨', label: 'Design',          color: '#FFFBEB', border: '#FDE68A', text: '#92400E', bg: '#D97706' },
+]
+
+const TESTIMONIALS = [
+  {
+    quote: "I landed my first dev job after finishing the Python and Web Dev courses. The certificate really helped my resume stand out.",
+    name: 'Marcus T.',
+    role: 'Junior Developer',
+    initials: 'MT',
+    color: '#0056D2',
+  },
+  {
+    quote: "The quizzes are tough but fair. I loved that I couldn't skip to the quiz — finishing every lesson made the difference.",
+    name: 'Isabelle M.',
+    role: 'Data Analyst',
+    initials: 'IM',
+    color: '#16A34A',
+  },
+  {
+    quote: "Free, structured, and the certificates look great on LinkedIn. I've completed 3 courses and already got a promotion.",
+    name: 'Carlos R.',
+    role: 'DevOps Engineer',
+    initials: 'CR',
+    color: '#7C3AED',
+  },
+]
+
 const FEATURES = [
   {
     title: 'Expert Instructors',
     description: 'Learn from industry professionals with real-world experience in top companies.',
+    iconBg: '#EFF6FF', iconColor: '#1D4ED8',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
@@ -19,8 +52,9 @@ const FEATURES = [
   {
     title: 'Interactive Quizzes',
     description: 'Test what you know with instant-feedback quizzes after each section.',
+    iconBg: '#F0FDF4', iconColor: '#15803D',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
     ),
@@ -28,8 +62,9 @@ const FEATURES = [
   {
     title: 'Track Your Progress',
     description: 'Visual progress tracking shows exactly where you stand lesson by lesson.',
+    iconBg: '#F5F3FF', iconColor: '#6D28D9',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
       </svg>
     ),
@@ -37,8 +72,9 @@ const FEATURES = [
   {
     title: 'Earn Certificates',
     description: 'Receive a certificate when you pass the final quiz — shareable on LinkedIn.',
+    iconBg: '#FFFBEB', iconColor: '#B45309',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
       </svg>
     ),
@@ -75,11 +111,11 @@ export default async function HomePage() {
       <HomeHero />
 
       {/* ── Partners ── */}
-      <section style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', padding: '20px 0' }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <span style={{ fontSize: 13, color: '#A0A0A0', fontWeight: 500 }}>Trusted by learners from</span>
+      <section style={{ background: '#FAFAFA', borderBottom: '1px solid #E0E0E0', padding: '18px 0' }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <span style={{ fontSize: 12, color: '#A0A0A0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>Trusted by learners from</span>
           {PARTNERS.map(name => (
-            <span key={name} style={{ fontSize: 14, fontWeight: 700, color: '#5C5C5C', letterSpacing: '-0.01em' }}>{name}</span>
+            <span key={name} style={{ fontSize: 15, fontWeight: 800, color: '#C0C0C0', letterSpacing: '-0.02em' }}>{name}</span>
           ))}
         </div>
       </section>
@@ -92,6 +128,32 @@ export default async function HomePage() {
             <Link href="/courses" style={{ fontSize: 14, color: '#0056D2', fontWeight: 600, textDecoration: 'none' }}>See all courses</Link>
           </div>
           <FeaturedCoursesSection />
+        </div>
+      </section>
+
+      {/* ── Browse by Category ── */}
+      <section style={{ background: '#F5F7F8', borderTop: '1px solid #E0E0E0', padding: '64px 0' }}>
+        <div className="container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 36 }}>
+            <div>
+              <h2 style={{ fontSize: 'clamp(22px, 2.8vw, 32px)', fontWeight: 700, color: '#1F1F1F', letterSpacing: '-0.01em', marginBottom: 6 }}>Browse by category</h2>
+              <p style={{ fontSize: 15, color: '#5C5C5C' }}>Find the right course for where you want to go</p>
+            </div>
+            <Link href="/courses" style={{ fontSize: 14, color: '#0056D2', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>All courses →</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+            {CATEGORIES.map(cat => (
+              <Link key={cat.label} href="/courses" style={{ textDecoration: 'none' }}>
+                <div style={{ background: '#fff', border: `1px solid ${cat.border}`, borderRadius: 12, padding: '28px 20px', textAlign: 'center', transition: 'box-shadow 0.15s, transform 0.15s' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 14, background: cat.color, border: `1.5px solid ${cat.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>
+                    {cat.icon}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: cat.text, marginBottom: 6 }}>{cat.label}</div>
+                  <div style={{ fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>View courses →</div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -120,10 +182,42 @@ export default async function HomePage() {
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 28 }}>
             {FEATURES.map(f => (
-              <div key={f.title} className="card-hover" style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8, padding: '28px 24px' }}>
-                <div style={{ color: '#0056D2', marginBottom: 18 }}>{f.icon}</div>
+              <div key={f.title} className="card-hover" style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 12, padding: '28px 24px' }}>
+                <div style={{ width: 52, height: 52, borderRadius: 12, background: f.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: f.iconColor, marginBottom: 20 }}>{f.icon}</div>
                 <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1F1F1F', marginBottom: 10 }}>{f.title}</h3>
                 <p style={{ fontSize: 14, color: '#5C5C5C', lineHeight: 1.65 }}>{f.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials ── */}
+      <section style={{ background: '#fff', borderTop: '1px solid #E0E0E0', padding: '72px 0' }}>
+        <div className="container">
+          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: '#1F1F1F', marginBottom: 8, textAlign: 'center', letterSpacing: '-0.01em' }}>
+            What learners say
+          </h2>
+          <p style={{ fontSize: 15, color: '#5C5C5C', textAlign: 'center', marginBottom: 48 }}>
+            Real outcomes from real students
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
+            {TESTIMONIALS.map(t => (
+              <div key={t.name} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '28px 28px 24px' }}>
+                {/* Stars */}
+                <div style={{ color: '#F59E0B', fontSize: 14, marginBottom: 16, letterSpacing: 2 }}>★★★★★</div>
+                <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.7, marginBottom: 24, fontStyle: 'italic' }}>
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: t.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                    {t.initials}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1F1F1F' }}>{t.name}</div>
+                    <div style={{ fontSize: 12, color: '#6B7280' }}>{t.role}</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
