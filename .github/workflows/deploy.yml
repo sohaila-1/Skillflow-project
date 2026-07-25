@@ -94,7 +94,7 @@ jobs:
             --min-instances=0 \
             --max-instances=3 \
             --set-env-vars="NODE_ENV=production,KEYCLOAK_REALM=skillflow,KEYCLOAK_URL=$KEYCLOAK_URL,KEYCLOAK_CLIENT_ID=skillflow-backend,PUBSUB_PROJECT_ID=$PROJECT_ID,PUBSUB_TOPIC_NAME=skillflow-events,PUBSUB_SUBSCRIPTION_NAME=skillflow-worker-sub" \
-            --set-secrets="DATABASE_URL=skillflow-db-url:latest,KEYCLOAK_CLIENT_SECRET=skillflow-keycloak-client-secret:latest"
+            --set-secrets="DATABASE_URL=skillflow-db-url:latest,KEYCLOAK_CLIENT_SECRET=skillflow-keycloak-client-secret:latest,KEYCLOAK_ADMIN_PASSWORD=skillflow-keycloak-admin-pass:latest"
 
       - name: Deploy worker to Cloud Run
         run: |
