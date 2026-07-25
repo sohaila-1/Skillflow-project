@@ -7,7 +7,7 @@ export async function apiFetch<T = unknown>(
   options: RequestInit = {},
 ): Promise<T> {
   const kc = getKeycloak()
-  if (kc.isTokenExpired?.(30)) {
+  if (kc.authenticated && kc.isTokenExpired?.(30)) {
     await kc.updateToken(30).catch(() => kc.logout())
   }
 
