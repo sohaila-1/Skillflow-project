@@ -24,7 +24,11 @@ interface SubmitResult {
   passed: boolean
 }
 
-type Phase = 'loading' | 'no-quiz' | 'intro' | 'quiz' | 'result'
+interface CourseSection {
+  lessons: unknown[]
+}
+
+type Phase = 'loading' | 'locked' | 'no-quiz' | 'intro' | 'quiz' | 'result'
 
 export default function QuizPage({ params }: { params: { id: string } }) {
   const [phase, setPhase]         = useState<Phase>('loading')
@@ -35,11 +39,29 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   const [answers, setAnswers]     = useState<number[]>([])
   const [result, setResult]       = useState<SubmitResult | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [totalLessons, setTotalLessons] = useState(0)
+  const [completedCount, setCompletedCount] = useState(0)
 
   useEffect(() => {
-    apiFetch<Quiz>(`/courses/${params.id}/quiz`)
-      .then(q => { setQuiz(q); setAnswers(Array(q.questions.length).fill(-1)); setPhase('intro') })
-      .catch(() => setPhase('no-quiz'))
+    Promise.all([
+      apiFetch<Quiz>(`/courses/${params.id}/quiz`).catch(() => null),
+      apiFetch<{ sections: CourseSection[] }>(`/courses/${params.id}`).catch(() => null),
+      apiFetch<{ completedLessonIds: string[] }>(`/courses/${params.id}/progress`).catch(() => ({ completedLessonIds: [] })),
+    ]).then(([q, course, progress]) => {
+      const total = course?.sections.reduce((acc, s) => acc + s.lessons.length, 0) ?? 0
+      const completed = progress?.completedLessonIds.length ?? 0
+      setTotalLessons(total)
+      setCompletedCount(completed)
+
+      if (total > 0 && completed < total) {
+        setPhase('locked')
+        return
+      }
+      if (!q) { setPhase('no-quiz'); return }
+      setQuiz(q)
+      setAnswers(Array(q.questions.length).fill(-1))
+      setPhase('intro')
+    })
   }, [params.id])
 
   function handleSelect(idx: number) {
@@ -129,6 +151,39 @@ export default function QuizPage({ params }: { params: { id: string } }) {
           {phase === 'loading' && (
             <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-secondary)' }}>
               Loading quiz...
+            </div>
+          )}
+
+          {/* Locked */}
+          {phase === 'locked' && (
+            <div style={{ textAlign: 'center', padding: 60 }}>
+              <div style={{
+                width: 88, height: 88, borderRadius: 'var(--radius-xl)',
+                background: '#FEF2F2', border: '1px solid #FECACA',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 24px', fontSize: 40,
+              }}>🔒</div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>
+                Quiz Locked
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.65, marginBottom: 8 }}>
+                You need to complete all lessons before taking the quiz.
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 32 }}>
+                Progress: <strong style={{ color: 'var(--text)' }}>{completedCount} / {totalLessons}</strong> lessons completed
+              </p>
+              <div style={{ height: 8, background: 'var(--border)', borderRadius: 4, maxWidth: 320, margin: '0 auto 32px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 4,
+                  width: `${totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0}%`,
+                  background: 'var(--accent)', transition: 'width 0.4s',
+                }} />
+              </div>
+              <Link href={`/courses/${params.id}`} style={{
+                padding: '11px 28px', background: 'var(--accent)', color: '#fff',
+                borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600,
+                display: 'inline-block', textDecoration: 'none',
+              }}>Continue Learning →</Link>
             </div>
           )}
 
