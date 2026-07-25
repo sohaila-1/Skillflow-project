@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { KeycloakProvider } from '../providers/keycloak-provider'
+import { ThemeProvider } from '../providers/theme-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -14,9 +15,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <KeycloakProvider>{children}</KeycloakProvider>
+        <ThemeProvider>
+          <KeycloakProvider>{children}</KeycloakProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

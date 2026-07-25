@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { apiFetch } from '../../lib/api'
 import { useKeycloak } from '../../providers/keycloak-provider'
+import ThemeToggle from '../../components/ThemeToggle'
 
 interface Course {
   id: string
@@ -97,7 +98,8 @@ export default function CoursesPage() {
           <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
             Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
           </Link>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <ThemeToggle />
             {isAuthenticated
               ? <Link href="/dashboard" style={{ padding: '7px 16px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600 }}>Dashboard</Link>
               : <>

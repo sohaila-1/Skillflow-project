@@ -6,6 +6,7 @@ import { useKeycloak } from '../../providers/keycloak-provider'
 import { useRequireAuth } from '../../hooks/useRequireAuth'
 import { apiFetch } from '../../lib/api'
 import AuthNavActions from '../../components/AuthNavActions'
+import ThemeToggle from '../../components/ThemeToggle'
 
 interface Lesson   { title: string; duration: string; content?: string }
 interface Section  { title: string; lessons: Lesson[] }
@@ -42,16 +43,16 @@ function Shimmer({ w = '100%', h = 16, r = 4 }: { w?: string | number; h?: numbe
   return (
     <div style={{
       width: w, height: h, borderRadius: r,
-      background: 'linear-gradient(90deg,#F5F5F5 25%,#EBEBEB 50%,#F5F5F5 75%)',
+      background: 'linear-gradient(90deg,var(--bg-subtle) 25%,var(--border) 50%,var(--bg-subtle) 75%)',
       backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite'
     }} />
   )
 }
 
-function ProgressBar({ pct, color = '#0056D2' }: { pct: number; color?: string }) {
+function ProgressBar({ pct, color = 'var(--accent)' }: { pct: number; color?: string }) {
   return (
-    <div style={{ height: 6, background: '#F0F0F0', borderRadius: 10, overflow: 'hidden' }}>
-      <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? '#16A34A' : color, borderRadius: 10, transition: 'width 0.4s' }} />
+    <div style={{ height: 6, background: 'var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: pct >= 100 ? 'var(--green)' : color, borderRadius: 10, transition: 'width 0.4s' }} />
     </div>
   )
 }
@@ -111,20 +112,21 @@ export default function DashboardPage() {
   const firstName = user?.preferred_username ?? ''
 
   return (
-    <div style={{ background: '#F5F7F8', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+    <div style={{ background: 'var(--bg-alt)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
       <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
 
       {/* ── Top bar ── */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', height: 56, display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
+      <nav style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', height: 56, display: 'flex', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: '#1F1F1F', textDecoration: 'none' }}>
-            Skill<span style={{ color: '#0056D2' }}>Flow</span>
+          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', textDecoration: 'none' }}>
+            Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
           </Link>
-          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-            <Link href="/courses" style={{ fontSize: 14, color: '#5C5C5C', fontWeight: 500, textDecoration: 'none' }}>Browse</Link>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <Link href="/courses" style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500, textDecoration: 'none' }}>Browse</Link>
             {(user?.roles ?? []).includes('instructor') && (
-              <Link href="/courses/new" style={{ fontSize: 14, color: '#0056D2', fontWeight: 600, textDecoration: 'none' }}>+ Create Course</Link>
+              <Link href="/courses/new" style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>+ Create Course</Link>
             )}
+            <ThemeToggle />
             <AuthNavActions />
           </div>
         </div>
@@ -138,17 +140,17 @@ export default function DashboardPage() {
 
             {/* Welcome */}
             <div style={{ marginBottom: 32 }}>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1F1F1F', letterSpacing: '-0.02em', marginBottom: 4 }}>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', marginBottom: 4 }}>
                 {loading ? 'My Learning' : `Welcome back${firstName ? `, ${firstName}` : ''}!`}
               </h1>
-              <p style={{ fontSize: 14, color: '#5C5C5C' }}>Track your progress and continue where you left off.</p>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Track your progress and continue where you left off.</p>
             </div>
 
             {/* Stats strip */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 36 }}>
               {loading
                 ? [1,2,3,4].map(i => (
-                  <div key={i} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '20px 20px' }}>
+                  <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: '20px 20px' }}>
                     <Shimmer w="50%" h={28} r={4} />
                     <div style={{ marginTop: 8 }}><Shimmer w="80%" h={12} /></div>
                   </div>
@@ -159,12 +161,12 @@ export default function DashboardPage() {
                     { value: certs.length,                       label: 'Certificates', href: '/certificates' },
                     { value: `${Math.round(totalHours / 60)}h`, label: 'Hours learned', href: undefined },
                   ].map(s => (
-                  <div key={s.label} onClick={() => s.href && (window.location.href = s.href)} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '16px 20px', cursor: s.href ? 'pointer' : 'default', transition: 'border-color 0.15s' }}
+                  <div key={s.label} onClick={() => s.href && (window.location.href = s.href)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: '16px 20px', cursor: s.href ? 'pointer' : 'default', transition: 'border-color 0.15s' }}
                     onMouseEnter={e => { if (s.href) (e.currentTarget as HTMLDivElement).style.borderColor = '#7C3AED' }}
-                    onMouseLeave={e => { if (s.href) (e.currentTarget as HTMLDivElement).style.borderColor = '#E0E0E0' }}
+                    onMouseLeave={e => { if (s.href) (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)' }}
                   >
-                    <div style={{ fontSize: 28, fontWeight: 800, color: s.href ? '#7C3AED' : '#1F1F1F', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>{s.value}</div>
-                    <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 6, fontWeight: 500 }}>{s.label}</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: s.href ? '#7C3AED' : 'var(--text)', fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em', lineHeight: 1 }}>{s.value}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, fontWeight: 500 }}>{s.label}</div>
                   </div>
                 ))
               }
@@ -172,27 +174,27 @@ export default function DashboardPage() {
 
             {/* Continue Learning */}
             {!loading && resumeCourse && (
-              <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24, marginBottom: 36 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#5C5C5C', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 16 }}>
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: 24, marginBottom: 36 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 16 }}>
                   Continue Learning
                 </div>
                 <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-                  <div style={{ width: 6, height: 72, borderRadius: 4, background: CAT_COLOR[resumeCourse.category] ?? '#0056D2', flexShrink: 0 }} />
+                  <div style={{ width: 6, height: 72, borderRadius: 4, background: CAT_COLOR[resumeCourse.category] ?? 'var(--accent)', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: CAT_COLOR[resumeCourse.category] ?? '#0056D2', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: CAT_COLOR[resumeCourse.category] ?? 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
                       {resumeCourse.category}
                     </div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#1F1F1F', marginBottom: 10 }}>{resumeCourse.title}</div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 10 }}>{resumeCourse.title}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ flex: 1 }}>
                         <ProgressBar pct={progress[resumeCourse.id]?.pct ?? 0} color={CAT_COLOR[resumeCourse.category]} />
                       </div>
-                      <span style={{ fontSize: 12, color: '#5C5C5C', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontWeight: 600 }}>
                         {progress[resumeCourse.id]?.pct ?? 0}% complete
                       </span>
                     </div>
                   </div>
-                  <Link href={`/courses/${resumeCourse.id}`} style={{ flexShrink: 0, padding: '10px 20px', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  <Link href={`/courses/${resumeCourse.id}`} style={{ flexShrink: 0, padding: '10px 20px', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                     Resume
                   </Link>
                 </div>
@@ -202,16 +204,16 @@ export default function DashboardPage() {
             {/* My Courses */}
             <div style={{ marginBottom: 36 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 20 }}>
-                <h2 style={{ fontSize: 19, fontWeight: 700, color: '#1F1F1F', letterSpacing: '-0.01em' }}>My Courses</h2>
+                <h2 style={{ fontSize: 19, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>My Courses</h2>
                 {enrolled.length > 0 && (
-                  <span style={{ fontSize: 13, color: '#5C5C5C' }}>{enrolled.length} course{enrolled.length !== 1 ? 's' : ''} enrolled</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{enrolled.length} course{enrolled.length !== 1 ? 's' : ''} enrolled</span>
                 )}
               </div>
 
               {loading ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                   {[1,2,3,4].map(i => (
-                    <div key={i} style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, overflow: 'hidden' }}>
+                    <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{ height: 5 }}><Shimmer h={5} /></div>
                       <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <Shimmer w="30%" h={10} /><Shimmer w="85%" h={14} /><Shimmer w="60%" h={10} /><Shimmer h={6} />
@@ -220,9 +222,9 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : enrolled.length === 0 ? (
-                <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: '52px 32px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 15, color: '#5C5C5C', marginBottom: 20 }}>You haven't enrolled in any courses yet.</div>
-                  <Link href="/courses" style={{ padding: '10px 24px', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: '52px 32px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 20 }}>You haven&apos;t enrolled in any courses yet.</div>
+                  <Link href="/courses" style={{ padding: '10px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
                     Browse Courses
                   </Link>
                 </div>
@@ -237,16 +239,16 @@ export default function DashboardPage() {
                     return (
                       <Link key={course.id} href={`/courses/${course.id}`} style={{ display: 'block', textDecoration: 'none' }}>
                         <div
-                          style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
-                          onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)')}
-                          onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)')}
+                          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden', boxShadow: 'var(--shadow-sm)', transition: 'box-shadow 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.boxShadow = 'var(--shadow-md)')}
+                          onMouseLeave={e => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
                         >
-                          <div style={{ height: 5, background: isDone ? '#16A34A' : color }} />
+                          <div style={{ height: 5, background: isDone ? 'var(--green)' : color }} />
                           <div style={{ padding: '18px 18px 20px' }}>
                             <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
                               {course.category}
                             </div>
-                            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1F1F1F', lineHeight: 1.4, marginBottom: 16, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', lineHeight: 1.4, marginBottom: 16, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                               {course.title}
                             </h3>
 
@@ -255,8 +257,8 @@ export default function DashboardPage() {
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 12, color: '#9CA3AF' }}>{prog.done}/{total} lessons</span>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: isDone ? '#16A34A' : color }}>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{prog.done}/{total} lessons</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: isDone ? 'var(--green)' : color }}>
                                 {isDone ? 'Completed' : `${prog.pct}%`}
                               </span>
                             </div>
@@ -279,25 +281,25 @@ export default function DashboardPage() {
             {/* Recommended */}
             {!loading && recommended.length > 0 && (
               <div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, color: '#1F1F1F', letterSpacing: '-0.01em', marginBottom: 20 }}>Recommended for you</h2>
+                <h2 style={{ fontSize: 19, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 20 }}>Recommended for you</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {recommended.map(course => {
                     const color = CAT_COLOR[course.category] ?? '#7C3AED'
                     return (
                       <Link key={course.id} href={`/courses/${course.id}`} style={{ display: 'block', textDecoration: 'none' }}>
                         <div
-                          style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, display: 'flex', alignItems: 'center', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'box-shadow 0.15s' }}
-                          onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)')}
-                          onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)')}
+                          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, display: 'flex', alignItems: 'center', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', transition: 'box-shadow 0.15s' }}
+                          onMouseEnter={e => (e.currentTarget.style.boxShadow = 'var(--shadow-md)')}
+                          onMouseLeave={e => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
                         >
                           <div style={{ width: 5, alignSelf: 'stretch', background: color, flexShrink: 0 }} />
                           <div style={{ padding: '16px 20px', flex: 1 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{course.category}</div>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: '#1F1F1F', marginBottom: 4 }}>{course.title}</div>
-                            <div style={{ fontSize: 12, color: '#9CA3AF' }}>{course.level}</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{course.title}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{course.level}</div>
                           </div>
                           <div style={{ padding: '0 20px', flexShrink: 0 }}>
-                            <span style={{ fontSize: 13, color: '#0056D2', fontWeight: 600 }}>Enroll →</span>
+                            <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Enroll →</span>
                           </div>
                         </div>
                       </Link>
@@ -312,32 +314,32 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Profile card */}
-            <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24 }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#0056D2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 20, fontWeight: 700, flexShrink: 0 }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 20, fontWeight: 700, flexShrink: 0 }}>
                   {firstName?.[0]?.toUpperCase() ?? 'U'}
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1F1F1F' }}>{user?.preferred_username ?? 'Learner'}</div>
-                  <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{user?.email ?? ''}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{user?.preferred_username ?? 'Learner'}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{user?.email ?? ''}</div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 16, borderTop: '1px solid #F0F0F0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1F1F1F', fontFamily: 'var(--font-heading)' }}>{enrolled.length}</div>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>Courses</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', fontFamily: 'var(--font-heading)' }}>{enrolled.length}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Courses</div>
                 </div>
-                <div style={{ textAlign: 'center', borderLeft: '1px solid #F0F0F0' }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#1F1F1F', fontFamily: 'var(--font-heading)' }}>{completedCount}</div>
-                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>Completed</div>
+                <div style={{ textAlign: 'center', borderLeft: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', fontFamily: 'var(--font-heading)' }}>{completedCount}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Completed</div>
                 </div>
               </div>
             </div>
 
             {/* Learning overview */}
             {!loading && enrolled.length > 0 && (
-              <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#1F1F1F', marginBottom: 18 }}>Learning Overview</div>
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: 24 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 18 }}>Learning Overview</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {enrolled.slice(0, 4).map(c => {
                     const prog  = progress[c.id] ?? { pct: 0 }
@@ -345,8 +347,8 @@ export default function DashboardPage() {
                     return (
                       <div key={c.id}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span style={{ fontSize: 12, color: '#5C5C5C', fontWeight: 500, flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{c.title}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: prog.pct >= 100 ? '#16A34A' : color, marginLeft: 8, flexShrink: 0 }}>{prog.pct}%</span>
+                          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500, flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{c.title}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: prog.pct >= 100 ? 'var(--green)' : color, marginLeft: 8, flexShrink: 0 }}>{prog.pct}%</span>
                         </div>
                         <ProgressBar pct={prog.pct} color={color} />
                       </div>
@@ -358,9 +360,9 @@ export default function DashboardPage() {
 
             {/* Certificates */}
             {!loading && certs.length > 0 && (
-              <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, padding: 24 }}>
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, padding: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1F1F1F' }}>Certificates</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Certificates</div>
                   <Link href="/certificates" style={{ fontSize: 12, color: '#7C3AED', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -378,12 +380,12 @@ export default function DashboardPage() {
             )}
 
             {/* Browse CTA */}
-            <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 4, padding: 24 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#1E3A8A', marginBottom: 8 }}>Discover more</div>
-              <p style={{ fontSize: 13, color: '#1E40AF', lineHeight: 1.6, marginBottom: 16 }}>
+            <div style={{ background: 'var(--accent-dim)', border: '1px solid #BFDBFE', borderRadius: 4, padding: 24 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--accent)', marginBottom: 8 }}>Discover more</div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 16 }}>
                 Explore our full course catalog and find your next skill.
               </p>
-              <Link href="/courses" style={{ display: 'block', textAlign: 'center', padding: '10px 0', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+              <Link href="/courses" style={{ display: 'block', textAlign: 'center', padding: '10px 0', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
                 Browse All Courses
               </Link>
             </div>

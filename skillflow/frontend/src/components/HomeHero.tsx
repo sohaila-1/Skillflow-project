@@ -22,7 +22,7 @@ export default function HomeHero() {
   }, [isAuthenticated])
 
   if (isLoading) {
-    return <section style={{ background: '#F5F7F8', padding: '72px 0 64px', borderBottom: '1px solid #E0E0E0', minHeight: 320 }} />
+    return <section style={{ background: 'var(--bg-alt)', padding: '72px 0 64px', borderBottom: '1px solid var(--border)', minHeight: 320 }} />
   }
 
   /* ── Authenticated hero ── */
@@ -59,24 +59,9 @@ export default function HomeHero() {
           {/* Quick-access cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 230 }}>
             {[
-              {
-                href: '/dashboard',
-                icon: '📖',
-                label: 'Enrolled Courses',
-                value: enrollLoaded ? count.toString() : '—',
-              },
-              {
-                href: '/certificates',
-                icon: '🎓',
-                label: 'My Certificates',
-                value: '→',
-              },
-              {
-                href: '/account',
-                icon: '⚙️',
-                label: 'Account & Security',
-                value: '→',
-              },
+              { href: '/dashboard',    icon: '📖', label: 'Enrolled Courses',    value: enrollLoaded ? count.toString() : '—' },
+              { href: '/certificates', icon: '🎓', label: 'My Certificates',      value: '→' },
+              { href: '/account',      icon: '⚙️', label: 'Account & Security',   value: '→' },
             ].map(item => (
               <Link
                 key={item.label}
@@ -107,20 +92,20 @@ export default function HomeHero() {
   /* ── Guest hero + How it works ── */
   return (
     <>
-      <section style={{ background: '#F5F7F8', padding: '72px 0 64px', borderBottom: '1px solid #E0E0E0' }}>
+      <section style={{ background: 'var(--bg-alt)', padding: '72px 0 64px', borderBottom: '1px solid var(--border)' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
           <div>
-            <h1 style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#1F1F1F', marginBottom: 20 }}>
+            <h1 style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'var(--text)', marginBottom: 20 }}>
               Learn without<br />limits
             </h1>
-            <p style={{ fontSize: 16, color: '#5C5C5C', lineHeight: 1.7, marginBottom: 32, maxWidth: 440 }}>
+            <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32, maxWidth: 440 }}>
               Start, switch, or advance your career with free online courses from top instructors. Get certificates and build real skills.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/auth/register" style={{ padding: '12px 24px', background: '#0056D2', color: '#fff', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
+              <Link href="/auth/register" style={{ padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
                 Join for Free
               </Link>
-              <Link href="/courses" style={{ padding: '12px 24px', background: '#fff', color: '#1F1F1F', border: '2px solid #1F1F1F', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
+              <Link href="/courses" style={{ padding: '12px 24px', background: 'var(--surface)', color: 'var(--text)', border: '2px solid var(--border)', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
                 Browse Courses
               </Link>
             </div>
@@ -136,8 +121,8 @@ export default function HomeHero() {
               { icon: '🎨', label: 'Design',          color: '#FFFBEB', border: '#FDE68A', text: '#92400E' },
               { icon: '📚', label: 'General',         color: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' },
             ].map(cat => (
-              <Link key={cat.label} href={`/courses`} style={{ textDecoration: 'none' }}>
-                <div style={{ background: cat.color, border: `1px solid ${cat.border}`, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, transition: 'transform 0.15s', cursor: 'pointer' }}>
+              <Link key={cat.label} href="/courses" style={{ textDecoration: 'none' }}>
+                <div style={{ background: cat.color, border: `1px solid ${cat.border}`, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                   <span style={{ fontSize: 22 }}>{cat.icon}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: cat.text }}>{cat.label}</span>
                 </div>
@@ -148,9 +133,9 @@ export default function HomeHero() {
       </section>
 
       {/* How it works — guests only */}
-      <section id="how-it-works" style={{ background: '#fff', padding: '72px 0' }}>
+      <section id="how-it-works" style={{ background: 'var(--surface)', padding: '72px 0' }}>
         <div className="container">
-          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: '#1F1F1F', marginBottom: 48, letterSpacing: '-0.01em' }}>How SkillFlow works</h2>
+          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: 'var(--text)', marginBottom: 48, letterSpacing: '-0.01em' }}>How SkillFlow works</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 40 }}>
             {[
               { n: '1', title: 'Create an account',    desc: 'Sign up in seconds, completely free.' },
@@ -159,11 +144,11 @@ export default function HomeHero() {
               { n: '4', title: 'Get your certificate', desc: 'Pass the quiz and receive your certificate.' },
             ].map(s => (
               <div key={s.n}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#EFF6FF', border: '2px solid #0056D2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#0056D2', fontFamily: 'var(--font-heading)', marginBottom: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent-dim)', border: '2px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-heading)', marginBottom: 16 }}>
                   {s.n}
                 </div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1F1F1F', marginBottom: 8 }}>{s.title}</h3>
-                <p style={{ fontSize: 14, color: '#5C5C5C', lineHeight: 1.6 }}>{s.desc}</p>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>{s.title}</h3>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{s.desc}</p>
               </div>
             ))}
           </div>

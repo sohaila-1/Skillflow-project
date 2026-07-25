@@ -32,8 +32,8 @@ export default function AuthNavActions() {
     return (
       <div style={{
         width: 34, height: 34, borderRadius: '50%',
-        border: '2px solid #E0E0E0',
-        borderTopColor: '#0056D2',
+        border: '2px solid var(--border)',
+        borderTopColor: 'var(--accent)',
         animation: 'spin 0.7s linear infinite',
       }} />
     )
@@ -54,10 +54,10 @@ export default function AuthNavActions() {
           aria-label="Account menu"
           style={{
             width: 36, height: 36, borderRadius: '50%',
-            background: avatarUrl ? 'transparent' : '#0056D2',
+            background: avatarUrl ? 'transparent' : 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: 700, fontSize: 15, color: '#fff',
-            border: avatarUrl ? '2px solid #E0E0E0' : 'none',
+            border: avatarUrl ? '2px solid var(--border)' : 'none',
             cursor: 'pointer', overflow: 'hidden',
             boxShadow: open ? '0 0 0 3px rgba(0,86,210,0.25)' : 'none',
             transition: 'box-shadow 0.15s', padding: 0,
@@ -71,26 +71,26 @@ export default function AuthNavActions() {
         {open && (
           <div style={{
             position: 'absolute', top: 'calc(100% + 10px)', right: 0,
-            background: '#fff', border: '1px solid #E0E0E0', borderRadius: 8,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8,
+            boxShadow: 'var(--shadow-md)',
             minWidth: 220, zIndex: 200,
           }}>
-            {/* Header — clickable, goes to /account */}
-            <Link href="/account" onClick={() => setOpen(false)} style={{ display: 'block', padding: '14px 16px', borderBottom: '1px solid #F0F0F0', textDecoration: 'none' }}>
+            {/* Header */}
+            <Link href="/account" onClick={() => setOpen(false)} style={{ display: 'block', padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)', textDecoration: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarUrl ? 'transparent' : '#0056D2', border: avatarUrl ? '2px solid #E0E0E0' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarUrl ? 'transparent' : 'var(--accent)', border: avatarUrl ? '2px solid var(--border)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
                   {avatarUrl ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1F1F1F', marginBottom: 1 }}>{displayName}</div>
-                  <div style={{ fontSize: 12, color: '#6B7280' }}>{email}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)', marginBottom: 1 }}>{displayName}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{email}</div>
                 </div>
               </div>
               {isAdmin && (
                 <span style={{
                   display: 'inline-block', marginTop: 8,
-                  fontSize: 10, fontWeight: 700, color: '#0056D2',
-                  background: '#EFF6FF', border: '1px solid #BFDBFE',
+                  fontSize: 10, fontWeight: 700, color: 'var(--accent)',
+                  background: 'var(--accent-dim)', border: '1px solid #BFDBFE',
                   borderRadius: 4, padding: '2px 7px', textTransform: 'uppercase', letterSpacing: '0.06em',
                 }}>Admin</span>
               )}
@@ -134,13 +134,13 @@ export default function AuthNavActions() {
             </div>
 
             {/* Sign out */}
-            <div style={{ borderTop: '1px solid #F0F0F0', padding: '6px 0' }}>
+            <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '6px 0' }}>
               <button
                 onClick={() => { setOpen(false); logout() }}
                 style={{
                   ...linkStyle,
                   background: 'none', border: 'none', width: '100%',
-                  textAlign: 'left', cursor: 'pointer', color: '#DC2626',
+                  textAlign: 'left', cursor: 'pointer', color: 'var(--red)',
                 }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -159,14 +159,14 @@ export default function AuthNavActions() {
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
       <Link href="/auth/login" style={{
-        padding: '8px 16px', color: '#5C5C5C',
+        padding: '8px 16px', color: 'var(--text-secondary)',
         fontSize: 14, fontWeight: 500, textDecoration: 'none',
       }}>
         Log in
       </Link>
       <Link href="/auth/register" style={{
         padding: '9px 20px', borderRadius: 4,
-        background: '#0056D2', color: '#fff',
+        background: 'var(--accent)', color: '#fff',
         fontSize: 14, fontWeight: 600, textDecoration: 'none',
       }}>
         Join for Free
@@ -177,7 +177,7 @@ export default function AuthNavActions() {
 
 const linkStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 10,
-  padding: '9px 16px', fontSize: 14, color: '#1F1F1F',
+  padding: '9px 16px', fontSize: 14, color: 'var(--text)',
   fontWeight: 500, textDecoration: 'none',
   transition: 'background 0.1s',
 }

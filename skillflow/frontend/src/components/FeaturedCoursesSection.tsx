@@ -32,21 +32,21 @@ function StarRating({ rating = 4.5 }: { rating?: number }) {
         {'★'.repeat(Math.floor(rating))}
         {rating % 1 >= 0.5 ? '★' : ''}
       </span>
-      <span style={{ fontSize: 12, color: '#5C5C5C', fontWeight: 600 }}>{rating.toFixed(1)}</span>
-      <span style={{ fontSize: 12, color: '#9CA3AF' }}>(1,243)</span>
+      <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>{rating.toFixed(1)}</span>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>(1,243)</span>
     </span>
   )
 }
 
 function SkeletonCard() {
   return (
-    <div style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, overflow: 'hidden' }}>
-      <div style={{ height: 8, background: '#E0E0E0' }} />
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ height: 8, background: 'var(--border)' }} />
       <div style={{ padding: '16px 16px 20px' }}>
         {[75, 55, 40, 30].map((w, i) => (
           <div key={i} style={{
             height: i === 0 ? 18 : 12, width: `${w}%`,
-            background: 'linear-gradient(90deg, #F5F5F5 25%, #EBEBEB 50%, #F5F5F5 75%)',
+            background: 'linear-gradient(90deg, var(--bg-subtle) 25%, var(--border-subtle) 50%, var(--bg-subtle) 75%)',
             backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite',
             borderRadius: 3, marginBottom: i < 3 ? 10 : 0
           }} />
@@ -65,7 +65,6 @@ export default function FeaturedCoursesSection() {
       .then(r => r.json())
       .then((data: Course[]) => {
         const published = (data as Course[]).filter(c => (c as any).published !== false)
-        // Pick 1-2 free + 1-2 premium from different categories for variety
         const free = published.filter(c => !c.isPremium)
         const premium = published.filter(c => c.isPremium)
         const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5)
@@ -95,7 +94,7 @@ export default function FeaturedCoursesSection() {
 
               return (
                 <Link key={course.id} href={`/courses/${course.id}`} style={{ display: 'block', textDecoration: 'none' }}>
-                  <div className="course-card" style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 4, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', height: '100%' }}>
+                  <div className="course-card" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden', boxShadow: 'var(--shadow-sm)', height: '100%' }}>
                     {/* Color band */}
                     <div style={{ height: 8, background: color }} />
 
@@ -106,12 +105,12 @@ export default function FeaturedCoursesSection() {
                       </div>
 
                       {/* Title */}
-                      <h3 style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.35, color: '#1F1F1F', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.35, color: 'var(--text)', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {course.title}
                       </h3>
 
                       {/* Description */}
-                      <p style={{ fontSize: 13, color: '#5C5C5C', lineHeight: 1.55, marginBottom: 14, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 14, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {course.description}
                       </p>
 
@@ -125,19 +124,19 @@ export default function FeaturedCoursesSection() {
                         <span style={{ fontSize: 11, fontWeight: 600, background: badge.bg, color: badge.text, padding: '2px 8px', borderRadius: 3 }}>
                           {course.level}
                         </span>
-                        <span style={{ fontSize: 12, color: '#9CA3AF' }}>{sectionCount} sections · {lessons} lessons</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sectionCount} sections · {lessons} lessons</span>
                       </div>
 
                       {/* Pricing badge */}
-                      <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         {course.isPremium ? (
                           <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700, color: '#92400E', background: '#FFF8E6', border: '1px solid #F59E0B', padding: '3px 10px', borderRadius: 4 }}>
                             👑 Premium
                           </span>
                         ) : (
-                          <span style={{ fontSize: 15, fontWeight: 800, color: '#16A34A' }}>Free</span>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--green)' }}>Free</span>
                         )}
-                        <span style={{ fontSize: 13, color: '#0056D2', fontWeight: 600 }}>Enroll →</span>
+                        <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>Enroll →</span>
                       </div>
                     </div>
                   </div>

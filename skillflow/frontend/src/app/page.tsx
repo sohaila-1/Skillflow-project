@@ -4,13 +4,14 @@ import FeaturedCoursesSection from '../components/FeaturedCoursesSection'
 import CTAButtons from '../components/CTAButtons'
 import HomeHero from '../components/HomeHero'
 import HomeNavLinks from '../components/HomeNavLinks'
+import ThemeToggle from '../components/ThemeToggle'
 
 const CATEGORIES = [
-  { icon: '💻', label: 'Programming',     color: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8', bg: '#0056D2' },
-  { icon: '🌐', label: 'Web Development', color: '#F0FDFA', border: '#99F6E4', text: '#0F766E', bg: '#0891B2' },
-  { icon: '📊', label: 'Data Science',    color: '#F0FDF4', border: '#BBF7D0', text: '#15803D', bg: '#16A34A' },
-  { icon: '🐳', label: 'DevOps',          color: '#FEF2F2', border: '#FECACA', text: '#B91C1C', bg: '#DC2626' },
-  { icon: '🎨', label: 'Design',          color: '#FFFBEB', border: '#FDE68A', text: '#92400E', bg: '#D97706' },
+  { icon: '💻', label: 'Programming',     color: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
+  { icon: '🌐', label: 'Web Development', color: '#F0FDFA', border: '#99F6E4', text: '#0F766E' },
+  { icon: '📊', label: 'Data Science',    color: '#F0FDF4', border: '#BBF7D0', text: '#15803D' },
+  { icon: '🐳', label: 'DevOps',          color: '#FEF2F2', border: '#FECACA', text: '#B91C1C' },
+  { icon: '🎨', label: 'Design',          color: '#FFFBEB', border: '#FDE68A', text: '#92400E' },
 ]
 
 const TESTIMONIALS = [
@@ -94,15 +95,16 @@ async function getCourseCount(): Promise<number> {
 export default async function HomePage() {
   const courseCount = await getCourseCount()
   return (
-    <div style={{ background: '#fff', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
 
       {/* ── Nav ── */}
-      <nav style={{ background: '#fff', borderBottom: '1px solid #E0E0E0', position: 'sticky', top: 0, zIndex: 100 }}>
+      <nav style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', height: 64, gap: 40 }}>
-          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: '#1F1F1F', textDecoration: 'none', flexShrink: 0 }}>
-            Skill<span style={{ color: '#0056D2' }}>Flow</span>
+          <Link href="/" style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)', textDecoration: 'none', flexShrink: 0 }}>
+            Skill<span style={{ color: 'var(--accent)' }}>Flow</span>
           </Link>
           <HomeNavLinks />
+          <ThemeToggle />
           <AuthNavActions />
         </div>
       </nav>
@@ -111,45 +113,45 @@ export default async function HomePage() {
       <HomeHero />
 
       {/* ── Partners ── */}
-      <section style={{ background: '#FAFAFA', borderBottom: '1px solid #E0E0E0', padding: '18px 0' }}>
+      <section style={{ background: 'var(--bg-alt)', borderBottom: '1px solid var(--border)', padding: '18px 0' }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 32, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <span style={{ fontSize: 12, color: '#A0A0A0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>Trusted by learners from</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>Trusted by learners from</span>
           {PARTNERS.map(name => (
-            <span key={name} style={{ fontSize: 15, fontWeight: 800, color: '#C0C0C0', letterSpacing: '-0.02em' }}>{name}</span>
+            <span key={name} style={{ fontSize: 15, fontWeight: 800, color: 'var(--border-hover)', letterSpacing: '-0.02em' }}>{name}</span>
           ))}
         </div>
       </section>
 
       {/* ── Featured Courses ── */}
-      <section style={{ background: '#fff', padding: '64px 0' }}>
+      <section style={{ background: 'var(--surface)', padding: '64px 0' }}>
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 32 }}>
-            <h2 style={{ fontSize: 'clamp(22px, 2.8vw, 32px)', fontWeight: 700, color: '#1F1F1F', letterSpacing: '-0.01em' }}>Featured courses</h2>
-            <Link href="/courses" style={{ fontSize: 14, color: '#0056D2', fontWeight: 600, textDecoration: 'none' }}>See all courses</Link>
+            <h2 style={{ fontSize: 'clamp(22px, 2.8vw, 32px)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Featured courses</h2>
+            <Link href="/courses" style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>See all courses</Link>
           </div>
           <FeaturedCoursesSection />
         </div>
       </section>
 
       {/* ── Browse by Category ── */}
-      <section style={{ background: '#F5F7F8', borderTop: '1px solid #E0E0E0', padding: '64px 0' }}>
+      <section style={{ background: 'var(--bg-alt)', borderTop: '1px solid var(--border)', padding: '64px 0' }}>
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 36 }}>
             <div>
-              <h2 style={{ fontSize: 'clamp(22px, 2.8vw, 32px)', fontWeight: 700, color: '#1F1F1F', letterSpacing: '-0.01em', marginBottom: 6 }}>Browse by category</h2>
-              <p style={{ fontSize: 15, color: '#5C5C5C' }}>Find the right course for where you want to go</p>
+              <h2 style={{ fontSize: 'clamp(22px, 2.8vw, 32px)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 6 }}>Browse by category</h2>
+              <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Find the right course for where you want to go</p>
             </div>
-            <Link href="/courses" style={{ fontSize: 14, color: '#0056D2', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>All courses →</Link>
+            <Link href="/courses" style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>All courses →</Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
             {CATEGORIES.map(cat => (
               <Link key={cat.label} href="/courses" style={{ textDecoration: 'none' }}>
-                <div style={{ background: '#fff', border: `1px solid ${cat.border}`, borderRadius: 12, padding: '28px 20px', textAlign: 'center', transition: 'box-shadow 0.15s, transform 0.15s' }}>
+                <div style={{ background: 'var(--surface)', border: `1px solid ${cat.border}`, borderRadius: 12, padding: '28px 20px', textAlign: 'center' }}>
                   <div style={{ width: 56, height: 56, borderRadius: 14, background: cat.color, border: `1.5px solid ${cat.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>
                     {cat.icon}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: cat.text, marginBottom: 6 }}>{cat.label}</div>
-                  <div style={{ fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>View courses →</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>View courses →</div>
                 </div>
               </Link>
             ))}
@@ -158,7 +160,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Stats ── */}
-      <section style={{ background: '#F5F7F8', borderTop: '1px solid #E0E0E0', borderBottom: '1px solid #E0E0E0', padding: '52px 0' }}>
+      <section style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '52px 0' }}>
         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0 }}>
           {[
             { value: '10,000+',                      label: 'Active learners' },
@@ -166,26 +168,26 @@ export default async function HomePage() {
             { value: '100%',                          label: 'Free access' },
             { value: '4.9',                           label: 'Average rating' },
           ].map((s, i) => (
-            <div key={s.label} style={{ textAlign: 'center', padding: '0 24px', borderRight: i < 3 ? '1px solid #E0E0E0' : 'none' }}>
-              <div style={{ fontSize: 'clamp(28px,3vw,40px)', fontWeight: 800, color: '#0056D2', fontFamily: 'var(--font-heading)', marginBottom: 6 }}>{s.value}</div>
-              <div style={{ fontSize: 14, color: '#5C5C5C' }}>{s.label}</div>
+            <div key={s.label} style={{ textAlign: 'center', padding: '0 24px', borderRight: i < 3 ? `1px solid var(--border)` : 'none' }}>
+              <div style={{ fontSize: 'clamp(28px,3vw,40px)', fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-heading)', marginBottom: 6 }}>{s.value}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── Why ── */}
-      <section style={{ background: '#F5F7F8', borderTop: '1px solid #E0E0E0', padding: '72px 0' }}>
+      <section style={{ background: 'var(--bg-alt)', borderTop: '1px solid var(--border)', padding: '72px 0' }}>
         <div className="container">
-          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: '#1F1F1F', marginBottom: 48, textAlign: 'center', letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: 'var(--text)', marginBottom: 48, textAlign: 'center', letterSpacing: '-0.01em' }}>
             Why learners choose SkillFlow
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 28 }}>
             {FEATURES.map(f => (
-              <div key={f.title} className="card-hover" style={{ background: '#fff', border: '1px solid #E0E0E0', borderRadius: 12, padding: '28px 24px' }}>
+              <div key={f.title} className="card-hover" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '28px 24px' }}>
                 <div style={{ width: 52, height: 52, borderRadius: 12, background: f.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: f.iconColor, marginBottom: 20 }}>{f.icon}</div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1F1F1F', marginBottom: 10 }}>{f.title}</h3>
-                <p style={{ fontSize: 14, color: '#5C5C5C', lineHeight: 1.65 }}>{f.description}</p>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 10 }}>{f.title}</h3>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.65 }}>{f.description}</p>
               </div>
             ))}
           </div>
@@ -193,20 +195,19 @@ export default async function HomePage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section style={{ background: '#fff', borderTop: '1px solid #E0E0E0', padding: '72px 0' }}>
+      <section style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', padding: '72px 0' }}>
         <div className="container">
-          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: '#1F1F1F', marginBottom: 8, textAlign: 'center', letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: 'clamp(22px,2.8vw,32px)', fontWeight: 700, color: 'var(--text)', marginBottom: 8, textAlign: 'center', letterSpacing: '-0.01em' }}>
             What learners say
           </h2>
-          <p style={{ fontSize: 15, color: '#5C5C5C', textAlign: 'center', marginBottom: 48 }}>
+          <p style={{ fontSize: 15, color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 48 }}>
             Real outcomes from real students
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {TESTIMONIALS.map(t => (
-              <div key={t.name} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '28px 28px 24px' }}>
-                {/* Stars */}
+              <div key={t.name} style={{ background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '28px 28px 24px' }}>
                 <div style={{ color: '#F59E0B', fontSize: 14, marginBottom: 16, letterSpacing: 2 }}>★★★★★</div>
-                <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.7, marginBottom: 24, fontStyle: 'italic' }}>
+                <p style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.7, marginBottom: 24, fontStyle: 'italic' }}>
                   &ldquo;{t.quote}&rdquo;
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -214,8 +215,8 @@ export default async function HomePage() {
                     {t.initials}
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1F1F1F' }}>{t.name}</div>
-                    <div style={{ fontSize: 12, color: '#6B7280' }}>{t.role}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{t.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t.role}</div>
                   </div>
                 </div>
               </div>
@@ -238,7 +239,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ background: '#1F1F1F', padding: '52px 0 32px' }}>
+      <footer style={{ background: 'var(--footer-bg)', padding: '52px 0 32px' }}>
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 48, marginBottom: 40 }}>
             <div>
