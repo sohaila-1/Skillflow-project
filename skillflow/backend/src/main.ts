@@ -12,7 +12,14 @@ async function bootstrap(): Promise<void> {
   app.use(json({ limit: '5mb' }));
   app.use(urlencoded({ limit: '5mb', extended: true }));
 
-  app.enableCors({ origin: ['http://localhost:4000', 'http://localhost:3000'], credentials: true })
+  app.enableCors({
+    origin: [
+      'http://localhost:4000',
+      'http://localhost:3000',
+      'https://skillflow-frontend-p4zs6cjn4a-ew.a.run.app',
+    ],
+    credentials: true,
+  })
 
   // API Versioning — supports breaking changes without frontend impact
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
