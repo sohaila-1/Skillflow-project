@@ -25,7 +25,7 @@ import { PubSubModule } from './shared/pubsub/pubsub.module';
         url: config.get<string>('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
-        synchronize: config.get('NODE_ENV') !== 'production',
+        synchronize: true,
       }),
     }),
     PubSubModule,
