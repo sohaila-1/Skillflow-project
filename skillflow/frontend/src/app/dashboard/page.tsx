@@ -38,16 +38,6 @@ function parseMins(dur: string) {
   return m ? parseInt(m[1]) : 0
 }
 
-function getProgress(courseId: string): number {
-  if (typeof window === 'undefined') return 0
-  try {
-    const raw = localStorage.getItem(`progress-${courseId}`)
-    if (!raw) return 0
-    const data = JSON.parse(raw) as Record<string, boolean>
-    return Object.values(data).filter(Boolean).length
-  } catch { return 0 }
-}
-
 function Shimmer({ w = '100%', h = 16, r = 4 }: { w?: string | number; h?: number; r?: number }) {
   return (
     <div style={{
@@ -81,7 +71,7 @@ export default function DashboardPage() {
       apiFetch<{ courseId: string }[]>('/enrollments/me').catch(() => []),
       apiFetch<CourseEnrollment[]>('/courses').catch(() => []),
       apiFetch<Certificate[]>('/certificates/me').catch(() => []),
-    ]).then(([enrollRes, allRes, certsRes]: [{ courseId: string }[], CourseEnrollment[], Certificate[]]) => {
+    ]).then(async ([enrollRes, allRes, certsRes]: [{ courseId: string }[], CourseEnrollment[], Certificate[]]) => {
       setCerts(Array.isArray(certsRes) ? certsRes : [])
       const allCourses      = Array.isArray(allRes) ? allRes : []
       const enrolledIds     = new Set((Array.isArray(enrollRes) ? enrollRes : []).map(e => e.courseId))
@@ -90,10 +80,17 @@ export default function DashboardPage() {
       setEnrolled(enrolledCourses)
       setAll(allCourses)
 
+      const progressResults = await Promise.all(
+        enrolledCourses.map(c =>
+          apiFetch<{ completedLessonIds: string[] }>(`/courses/${c.id}/progress`)
+            .catch(() => ({ completedLessonIds: [] }))
+        )
+      )
+
       const prog: Record<string, { done: number; total: number; pct: number }> = {}
-      enrolledCourses.forEach((c: CourseEnrollment) => {
+      enrolledCourses.forEach((c: CourseEnrollment, i: number) => {
         const total = c.sections?.reduce((a: number, s: Section) => a + s.lessons.length, 0) ?? 0
-        const done  = getProgress(c.id)
+        const done  = progressResults[i]?.completedLessonIds?.length ?? 0
         prog[c.id]  = { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
       })
       setProgress(prog)
