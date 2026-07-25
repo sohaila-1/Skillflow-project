@@ -133,7 +133,10 @@ export class KeycloakAdminService {
     if (existing.includes(action)) return;
     const res = await this.adminFetch(`/users/${userId}`, {
       method: 'PUT',
-      body: JSON.stringify({ ...user, requiredActions: [...existing, action] }),
+      // emailVerified: true prevents Keycloak from injecting VERIFY_EMAIL into the
+      // required-actions flow and trying to send a verification email (which would
+      // fail if no SMTP is configured on the realm).
+      body: JSON.stringify({ ...user, emailVerified: true, requiredActions: [...existing, action] }),
     });
     if (!res.ok) {
       const text = await res.text();
