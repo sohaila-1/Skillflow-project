@@ -9,6 +9,9 @@ import { UsersModule } from '@modules/users/users.module';
 import { QuizzesModule } from '@modules/quizzes/quizzes.module';
 import { CertificatesModule } from '@modules/certificates/certificates.module';
 import { EnrollmentsModule } from '@modules/enrollments/enrollments.module';
+import { ProgressModule } from '@modules/progress/progress.module';
+import { ReviewsModule } from '@modules/reviews/reviews.module';
+import { SubscriptionsModule } from '@modules/subscriptions/subscriptions.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CorrelationIdMiddleware } from './shared/middleware/correlation-id.middleware';
 import { JwtAuthGuard } from './shared/guards/jwt-auth.guard';
@@ -32,6 +35,9 @@ import { PubSubModule } from './shared/pubsub/pubsub.module';
     AuthModule,
     CoursesModule,
     EnrollmentsModule,
+    ProgressModule,
+    ReviewsModule,
+    SubscriptionsModule,
     UsersModule,
     QuizzesModule,
     CertificatesModule,

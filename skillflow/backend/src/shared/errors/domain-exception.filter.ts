@@ -11,6 +11,7 @@ import {
   UnauthorizedError,
   ValidationError,
   ConflictError,
+  PaymentRequiredError,
 } from './domain.error';
 
 @Catch(DomainError)
@@ -34,6 +35,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
     if (error instanceof UnauthorizedError) return HttpStatus.UNAUTHORIZED;
     if (error instanceof ValidationError) return HttpStatus.BAD_REQUEST;
     if (error instanceof ConflictError) return HttpStatus.CONFLICT;
+    if (error instanceof PaymentRequiredError) return HttpStatus.PAYMENT_REQUIRED;
     return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 }

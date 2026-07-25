@@ -36,6 +36,7 @@ module "cloud_sql" {
 module "pubsub" {
   source      = "./modules/pubsub"
   environment = var.environment
+  project_id  = var.project_id
 }
 
 # ── Cloud Run — Backend ───────────────────────────────────
@@ -46,10 +47,13 @@ module "cloud_run_backend" {
   image        = var.backend_image
   port         = 3000
   env_vars = {
-    NODE_ENV       = var.environment
-    DATABASE_URL   = module.cloud_sql.database_url
-    KEYCLOAK_URL   = var.keycloak_url
-    KEYCLOAK_REALM = "skillflow"
+    NODE_ENV                = var.environment
+    DATABASE_URL            = module.cloud_sql.database_url
+    KEYCLOAK_URL            = var.keycloak_url
+    KEYCLOAK_REALM          = "skillflow"
+    PUBSUB_PROJECT_ID       = var.project_id
+    PUBSUB_TOPIC_REQUESTS   = module.pubsub.requests_topic_name
+    PUBSUB_TOPIC_RESPONSES  = module.pubsub.responses_topic_name
   }
 }
 

@@ -41,10 +41,12 @@ git push -u origin feature/ma-feature
 ### Merge vers main
 
 - Passer par une branche `release/x.y.z`
-- Tag git créé sur main : `git tag v1.2.3`
-- Le tag déclenche la pipeline de déploiement
+- Ouvrir une PR de `release/x.y.z` vers `main`
+- Après merge, créer un tag git : `git tag v1.2.3 && git push origin v1.2.3`
 
 ## CI/CD
 
-- Chaque push sur `main` déclenche : lint → typecheck → tests → build → push Docker
-- Le déploiement sur GCP Cloud Run est manuel (workflow `deploy-production.yml`)
+- **Pipeline automatique** : chaque push sur `main` déclenche pour chaque service (backend / worker / frontend) : lint → typecheck → tests → build → push Docker Hub
+- **Pipeline de déploiement** : workflow `deploy.yml` — déclenché manuellement via `workflow_dispatch` ou automatiquement sur push vers `main`. Il construit et pousse les images vers GCP Artifact Registry puis met à jour les services Cloud Run via `gcloud run deploy`.
+
+> Note : le déploiement automatique sur `main` permet un flux trunk-based simplifié. Pour un environnement de production strict, il est recommandé de restreindre le trigger `deploy.yml` à un `workflow_dispatch` manuel uniquement.

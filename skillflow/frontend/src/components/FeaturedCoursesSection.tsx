@@ -9,6 +9,7 @@ interface Course {
   description: string
   category: string
   level: string
+  isPremium: boolean
   sections: { title: string; lessons: { title: string; duration: string }[] }[]
 }
 
@@ -62,7 +63,15 @@ export default function FeaturedCoursesSection() {
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses`)
       .then(r => r.json())
-      .then((data: Course[]) => setCourses(data.slice(0, 3)))
+      .then((data: Course[]) => {
+        const published = (data as Course[]).filter(c => (c as any).published !== false)
+        // Pick 1-2 free + 1-2 premium from different categories for variety
+        const free = published.filter(c => !c.isPremium)
+        const premium = published.filter(c => c.isPremium)
+        const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5)
+        const picks = [...shuffle(free).slice(0, 2), ...shuffle(premium).slice(0, 1)]
+        setCourses(shuffle(picks))
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -119,9 +128,15 @@ export default function FeaturedCoursesSection() {
                         <span style={{ fontSize: 12, color: '#9CA3AF' }}>{sectionCount} sections · {lessons} lessons</span>
                       </div>
 
-                      {/* Free badge */}
+                      {/* Pricing badge */}
                       <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: '#1F1F1F' }}>Free</span>
+                        {course.isPremium ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700, color: '#92400E', background: '#FFF8E6', border: '1px solid #F59E0B', padding: '3px 10px', borderRadius: 4 }}>
+                            👑 Premium
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: 15, fontWeight: 800, color: '#16A34A' }}>Free</span>
+                        )}
                         <span style={{ fontSize: 13, color: '#0056D2', fontWeight: 600 }}>Enroll →</span>
                       </div>
                     </div>

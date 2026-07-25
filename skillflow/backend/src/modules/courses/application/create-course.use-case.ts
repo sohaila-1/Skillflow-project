@@ -24,6 +24,7 @@ export class CreateCourseUseCase {
       lessons: (s.lessons ?? []).map(l => ({ title: l.title, duration: l.duration ?? '10 min', content: l.content ?? '' })),
     }));
     course.published = dto.published ?? false;
+    course.isPremium = dto.isPremium ?? false;
     return this.repo.save(course);
   }
 }

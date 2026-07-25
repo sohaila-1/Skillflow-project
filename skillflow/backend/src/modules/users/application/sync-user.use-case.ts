@@ -1,26 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Inject, Injectable } from '@nestjs/common';
 import { User } from '../domain/user.entity';
+import { UserRepositoryPort, USER_REPOSITORY } from '../domain/user.repository.port';
 import { AuthenticatedUser } from '@modules/auth/interfaces/authenticated-user.interface';
 
 @Injectable()
 export class SyncUserUseCase {
   constructor(
-    @InjectRepository(User) private readonly repo: Repository<User>,
+    @Inject(USER_REPOSITORY)
+    private readonly repo: UserRepositoryPort,
   ) {}
 
-  async execute(auth: AuthenticatedUser): Promise<User> {
-    await this.repo.upsert(
-      {
-        id: auth.sub,
-        email: auth.email,
-        username: auth.preferred_username,
-        displayName: auth.preferred_username,
-        roles: auth.roles,
-      },
-      { conflictPaths: ['id'], skipUpdateIfNoValuesChanged: true },
-    );
-    return this.repo.findOneOrFail({ where: { id: auth.sub } });
+  execute(auth: AuthenticatedUser): Promise<User> {
+    return this.repo.sync({
+      id: auth.sub,
+      email: auth.email,
+      username: auth.preferred_username,
+      displayName: auth.preferred_username,
+      roles: auth.roles,
+    });
   }
 }

@@ -53,7 +53,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: sohaila01
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
@@ -68,5 +68,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            sohaila01/skillflow-backend:latest
-            sohaila01/skillflow-backend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/skillflow-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/skillflow-backend:${{ github.sha }}

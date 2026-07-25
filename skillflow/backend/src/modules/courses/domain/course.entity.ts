@@ -37,6 +37,9 @@ export class Course {
   @Column({ default: false })
   published!: boolean;
 
+  @Column({ name: 'is_premium', default: false })
+  isPremium!: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

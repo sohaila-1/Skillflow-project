@@ -30,6 +30,7 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-skillflow}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_FRONTEND_URL: http://localhost:8080
     volumes:
       - ./keycloak-realm:/opt/keycloak/data/import
     ports:
@@ -50,6 +51,8 @@ services:
       DATABASE_URL: postgresql://skillflow:skillflow@postgres:5432/skillflow
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_ISSUER: http://localhost:8080
+      KEYCLOAK_FRONTEND_CLIENT_ID: skillflow-frontend
+      FRONTEND_URL: http://localhost:4000
       PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
     volumes:
       - ./skillflow/backend:/app

@@ -3,20 +3,25 @@ import { IsString, IsNotEmpty, IsOptional, IsBoolean, MaxLength, IsArray, Valida
 import { Type } from 'class-transformer';
 
 export class CourseLessonDto {
+  @ApiProperty({ example: 'Introduction to Variables' })
   @IsString() @IsNotEmpty()
   title!: string;
 
+  @ApiPropertyOptional({ example: '10:30' })
   @IsString() @IsOptional()
   duration?: string;
 
+  @ApiPropertyOptional({ example: 'In this lesson we cover...' })
   @IsString() @IsOptional()
   content?: string;
 }
 
 export class CourseSectionDto {
+  @ApiProperty({ example: 'Module 1: Getting Started' })
   @IsString() @IsNotEmpty()
   title!: string;
 
+  @ApiPropertyOptional({ type: [CourseLessonDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CourseLessonDto)
@@ -57,4 +62,9 @@ export class CreateCourseDto {
   @IsBoolean()
   @IsOptional()
   published?: boolean;
+
+  @ApiPropertyOptional({ default: false, description: 'Requires active subscription to enroll' })
+  @IsBoolean()
+  @IsOptional()
+  isPremium?: boolean;
 }

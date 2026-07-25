@@ -6,11 +6,9 @@ import { AuthenticatedUser } from '@modules/auth/interfaces/authenticated-user.i
 import { QuizRepositoryPort, QUIZ_REPOSITORY } from '../domain/quiz.repository.port';
 import { Inject } from '@nestjs/common';
 import { CreateQuizDto } from './dto/create-quiz.dto';
-import { SubmitQuizDto } from './dto/submit-quiz.dto';
+import { SubmitQuizDto as SubmitQuizBodyDto } from './dto/submit-quiz.dto';
 import { randomUUID } from 'crypto';
-import { IssueCertificateUseCase } from '@modules/certificates/application/issue-certificate.use-case';
-import { CourseRepositoryPort, COURSE_REPOSITORY } from '@modules/courses/domain/course.repository.port';
-import { PubSubService } from '@shared/pubsub/pubsub.service';
+import { SubmitQuizUseCase } from '../application/submit-quiz.use-case';
 
 @ApiTags('quizzes')
 @ApiBearerAuth()
@@ -18,9 +16,7 @@ import { PubSubService } from '@shared/pubsub/pubsub.service';
 export class QuizzesController {
   constructor(
     @Inject(QUIZ_REPOSITORY) private readonly quizRepo: QuizRepositoryPort,
-    @Inject(COURSE_REPOSITORY) private readonly courseRepo: CourseRepositoryPort,
-    private readonly issueCertificate: IssueCertificateUseCase,
-    private readonly pubsub: PubSubService,
+    private readonly submitQuiz: SubmitQuizUseCase,
   ) {}
 
   @Get()
@@ -60,61 +56,16 @@ export class QuizzesController {
   @HttpCode(HttpStatus.OK)
   async submit(
     @Param('courseId') courseId: string,
-    @Body() dto: SubmitQuizDto,
+    @Body() dto: SubmitQuizBodyDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const quizResult = await this.quizRepo.findByCourseId(courseId);
-    if (quizResult.isErr()) throw quizResult.error;
-    if (!quizResult.value) throw new NotFoundException('No quiz for this course');
-
-    const quiz = quizResult.value;
-    const score = quiz.questions.reduce((acc, q, i) => {
-      return acc + (dto.answers[i] === q.correctIndex ? 1 : 0);
-    }, 0);
-
-    await this.quizRepo.saveAttempt({
-      quizId: quiz.id,
+    return this.submitQuiz.execute({
+      courseId,
       userId: user.sub,
-      score,
-      totalQuestions: quiz.questions.length,
+      studentName: user.preferred_username,
+      studentEmail: user.email,
       answers: dto.answers,
     });
-
-    const passed = score >= Math.ceil(quiz.questions.length * 0.7);
-
-    if (passed) {
-      const courseResult = await this.courseRepo.findById(courseId);
-      if (courseResult.isOk() && courseResult.value) {
-        const course = courseResult.value;
-        await this.issueCertificate.execute({
-          userId: user.sub,
-          courseId,
-          courseTitle: course.title,
-          studentName: user.preferred_username,
-          score,
-          totalQuestions: quiz.questions.length,
-        });
-
-        // Async: generate PDF + send email via worker
-        void this.pubsub.publish('CERTIFICATE_GENERATION', {
-          userId: user.sub,
-          courseId,
-          courseTitle: course.title,
-          studentName: user.preferred_username,
-          studentEmail: user.email,
-          score,
-          totalQuestions: quiz.questions.length,
-          completedAt: new Date().toISOString(),
-        });
-      }
-    }
-
-    return {
-      score,
-      total: quiz.questions.length,
-      percentage: Math.round((score / quiz.questions.length) * 100),
-      passed,
-    };
   }
 
   @Get('attempts')

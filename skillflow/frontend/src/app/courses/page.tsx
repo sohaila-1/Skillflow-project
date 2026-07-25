@@ -12,6 +12,7 @@ interface Course {
   instructorId: string
   category: string
   level: string
+  isPremium: boolean
   published: boolean
   createdAt: string
 }
@@ -64,15 +65,23 @@ export default function CoursesPage() {
     })
   }, [courses, search, category, level])
 
-  async function handleEnroll(courseId: string) {
+  async function handleEnroll(course: Course) {
     if (!isAuthenticated) { window.location.href = '/auth/login'; return }
-    setEnrolling(courseId)
+    if (course.isPremium) {
+      window.location.href = `/subscribe?returnTo=/courses`
+      return
+    }
+    setEnrolling(course.id)
     try {
-      await apiFetch('/enrollments', { method: 'POST', body: JSON.stringify({ courseId }) })
-      setEnrolled(prev => new Set(Array.from(prev).concat(courseId)))
+      await apiFetch('/enrollments', { method: 'POST', body: JSON.stringify({ courseId: course.id }) })
+      setEnrolled(prev => new Set(Array.from(prev).concat(course.id)))
       setMessage({ text: 'Enrolled successfully!', ok: true })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error'
+      if (msg.includes('402') || msg.includes('PAYMENT')) {
+        window.location.href = `/subscribe?returnTo=/courses`
+        return
+      }
       setMessage({ text: msg.includes('409') ? 'Already enrolled' : 'Failed to enroll', ok: false })
     } finally {
       setEnrolling(null)
@@ -183,8 +192,13 @@ export default function CoursesPage() {
                 return (
                   <div key={course.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column' }}>
                     <Link href={`/courses/${course.id}`} style={{ textDecoration: 'none' }}>
-                      <div style={{ height: 100, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ height: 100, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                         <div style={{ width: 44, height: 44, borderRadius: 'var(--radius)', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📚</div>
+                        {course.isPremium && (
+                          <div style={{ position: 'absolute', top: 8, right: 8, background: '#F59E0B', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, letterSpacing: '0.04em' }}>
+                            👑 PREMIUM
+                          </div>
+                        )}
                       </div>
                     </Link>
                     <div style={{ padding: '16px 18px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -210,17 +224,17 @@ export default function CoursesPage() {
                           </>
                         ) : (
                           <button
-                            onClick={() => handleEnroll(course.id)}
+                            onClick={() => handleEnroll(course)}
                             disabled={isEnrolled || enrolling === course.id}
                             style={{
                               width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)',
-                              background: isEnrolled ? 'var(--green-dim)' : 'var(--accent)',
-                              color: isEnrolled ? 'var(--green)' : '#fff',
-                              border: isEnrolled ? '1px solid #BBF7D0' : 'none',
+                              background: isEnrolled ? 'var(--green-dim)' : course.isPremium ? '#FFF8E6' : 'var(--accent)',
+                              color: isEnrolled ? 'var(--green)' : course.isPremium ? '#92400E' : '#fff',
+                              border: isEnrolled ? '1px solid #BBF7D0' : course.isPremium ? '1px solid #F59E0B' : 'none',
                               fontSize: 13, fontWeight: 600, cursor: isEnrolled ? 'default' : 'pointer',
                             }}
                           >
-                            {enrolling === course.id ? 'Enrolling…' : isEnrolled ? '✓ Enrolled' : 'Enroll'}
+                            {enrolling === course.id ? 'Enrolling…' : isEnrolled ? '✓ Enrolled' : course.isPremium ? '👑 Get Premium' : 'Enroll Free'}
                           </button>
                         )}
                       </div>
