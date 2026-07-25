@@ -3,9 +3,8 @@ import { CertificateGenerationTask, CertificatePayload } from './certificate-gen
 // Declare at module scope so the closure inside jest.mock can reference it at call time
 let mockSendMail: jest.Mock;
 
-const { EventEmitter } = require('events') as { EventEmitter: typeof import('events').EventEmitter };
-
 jest.mock('pdfkit', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   const { EventEmitter: EE } = require('events');
   return jest.fn().mockImplementation(() => {
     const emitter = new EE();
