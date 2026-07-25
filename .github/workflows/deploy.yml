@@ -9,7 +9,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: europe-west1
   REGISTRY: europe-west1-docker.pkg.dev
-  KEYCLOAK_URL: https://keycloak-839680719947.europe-west1.run.app
+  KEYCLOAK_URL: https://keycloak-p4zs6cjn4a-ew.a.run.app
 
 jobs:
   deploy:
