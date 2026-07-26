@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { CurrentUser } from '@shared/decorators/current-user.decorator';
 import { Public } from '@shared/decorators/public.decorator';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
@@ -65,6 +65,7 @@ export class AuthController {
     private readonly adminService: KeycloakAdminService,
     private readonly config: ConfigService,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Get('me')
@@ -174,6 +175,29 @@ export class AuthController {
     }
     await this.adminService.resetPassword(user.sub, dto.newPassword);
     return { ok: true };
+  }
+
+  @Delete('account')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Permanently delete the current user account (Keycloak + all local data)' })
+  async deleteAccount(@CurrentUser() user: AuthenticatedUser): Promise<void> {
+    const userId = user.sub;
+
+    // Wipe every user-scoped table in one transaction so we never leave orphans.
+    await this.dataSource.transaction(async (manager) => {
+      await manager.query('DELETE FROM enrollments    WHERE user_id = $1', [userId]);
+      await manager.query('DELETE FROM course_progress WHERE user_id = $1', [userId]);
+      await manager.query('DELETE FROM certificates    WHERE user_id = $1', [userId]);
+      await manager.query('DELETE FROM quiz_attempts    WHERE user_id = $1', [userId]);
+      await manager.query('DELETE FROM subscriptions    WHERE user_id = $1', [userId]);
+      await manager.query('DELETE FROM reviews          WHERE user_id = $1', [userId]);
+      await manager.query('DELETE FROM users            WHERE id = $1', [userId]);
+    });
+
+    // Finally remove the Keycloak identity. If this throws, the DB is already
+    // clean and the orphaned Keycloak user can be pruned manually.
+    await this.adminService.deleteUser(userId);
+    this.logger.log(`Account deleted: ${userId} (${user.preferred_username})`);
   }
 
   @Public()

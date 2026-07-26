@@ -233,6 +233,8 @@ export default function CourseDetailPage() {
   const color = CATEGORY_COLORS[course.category] ?? '#0891B2'
   const icon  = CATEGORY_ICONS[course.category] ?? '📚'
   const isOwner = user?.sub === course.instructorId
+  const isAdmin = user?.roles?.includes('admin') ?? false
+  const canManage = isOwner || isAdmin
 
   const totalLessons    = course.sections.reduce((acc, s) => acc + s.lessons.length, 0)
   const completedCount  = completed.size
@@ -267,7 +269,7 @@ export default function CourseDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <ThemeToggle />
             <Link href="/courses" style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500, textDecoration: 'none' }}>← All Courses</Link>
-            {isOwner && (
+            {canManage && (
               <>
                 <Link href={`/courses/${id}/edit`} style={{ padding: '6px 14px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600, background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid var(--border)', textDecoration: 'none' }}>Edit</Link>
                 <button onClick={handleDelete} disabled={deleting} style={{ padding: '6px 14px', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600, background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid rgba(220,38,38,0.35)', cursor: 'pointer' }}>

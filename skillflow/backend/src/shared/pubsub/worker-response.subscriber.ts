@@ -6,7 +6,9 @@ import { IssueCertificateUseCase } from '@modules/certificates/application/issue
 type WorkerResponse = {
   correlationId: string;
   type: 'CERTIFICATE_GENERATION' | 'QUIZ_CORRECTION';
+  status?: 'success' | 'failure';
   result: unknown;
+  error?: string;
 };
 
 type CertificateResult = {
@@ -76,6 +78,23 @@ export class WorkerResponseSubscriber implements OnApplicationBootstrap {
         { msgId: msg.id },
         'Unparseable worker response — acking to discard poison pill',
       );
+      msg.ack();
+      return;
+    }
+
+    // A task can fail permanently (or after exhausting retries). The worker
+    // still reports back so we're never left waiting on a result that never comes.
+    if (parsed.status === 'failure') {
+      this.logger.error(
+        { correlationId: parsed.correlationId, type: parsed.type, error: parsed.error },
+        'Worker reported a task failure',
+      );
+      if (parsed.type === 'CERTIFICATE_GENERATION') {
+        const partial = parsed.result as Partial<CertificateResult> | null;
+        if (partial?.userId && partial?.courseId) {
+          await this.issueCertificate.markEmailStatus(partial.userId, partial.courseId, false);
+        }
+      }
       msg.ack();
       return;
     }

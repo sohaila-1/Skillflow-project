@@ -1,4 +1,5 @@
 import logger from '../../shared/logger';
+import { PermanentTaskError } from '../../shared/task-error';
 
 export type QuizCorrectionPayload = {
   submissionId: string;
@@ -13,9 +14,23 @@ export type QuizCorrectionResult = {
   passed: boolean;
 };
 
+function validate(payload: unknown): QuizCorrectionPayload {
+  const p = payload as Partial<QuizCorrectionPayload> | null;
+  if (
+    !p ||
+    typeof p.submissionId !== 'string' ||
+    !Array.isArray(p.answers) ||
+    !Array.isArray(p.correctAnswers)
+  ) {
+    // Bad input — no amount of retrying will fix it.
+    throw new PermanentTaskError('Invalid quiz-correction payload');
+  }
+  return p as QuizCorrectionPayload;
+}
+
 export class QuizCorrectionTask {
   static async execute(payload: unknown): Promise<QuizCorrectionResult> {
-    const input = payload as QuizCorrectionPayload;
+    const input = validate(payload);
     logger.info({ submissionId: input.submissionId }, 'Correcting quiz');
 
     let correct = 0;

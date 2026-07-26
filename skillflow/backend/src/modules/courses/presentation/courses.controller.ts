@@ -58,7 +58,7 @@ export class CoursesController {
     @Body() dto: UpdateCourseDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const result = await this.updateCourse.execute(id, dto, user.sub);
+    const result = await this.updateCourse.execute(id, dto, user.sub, user.roles?.includes('admin'));
     if (result.isErr()) throw result.error;
     return result.value;
   }
@@ -67,7 +67,7 @@ export class CoursesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Roles('instructor', 'admin')
   async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.deleteCourse.execute(id, user.sub);
+    const result = await this.deleteCourse.execute(id, user.sub, user.roles?.includes('admin'));
     if (result.isErr()) throw result.error;
   }
 }

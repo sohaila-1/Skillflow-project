@@ -12,12 +12,12 @@ export class UpdateCourseUseCase {
     private readonly repo: CourseRepositoryPort,
   ) {}
 
-  async execute(id: string, dto: UpdateCourseDto, requesterId: string): Promise<Result<Course, DomainError>> {
+  async execute(id: string, dto: UpdateCourseDto, requesterId: string, isAdmin = false): Promise<Result<Course, DomainError>> {
     const result = await this.repo.findById(id);
     if (result.isErr()) return result;
 
     const course = result.value;
-    if (course.instructorId !== requesterId) {
+    if (!isAdmin && course.instructorId !== requesterId) {
       return err(new UnauthorizedError('You can only update your own courses'));
     }
 

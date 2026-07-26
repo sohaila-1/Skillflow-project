@@ -10,12 +10,12 @@ export class DeleteCourseUseCase {
     private readonly repo: CourseRepositoryPort,
   ) {}
 
-  async execute(id: string, requesterId: string): Promise<Result<void, DomainError>> {
+  async execute(id: string, requesterId: string, isAdmin = false): Promise<Result<void, DomainError>> {
     const result = await this.repo.findById(id);
     if (result.isErr()) return err(result.error);
 
     const course = result.value;
-    if (course.instructorId !== requesterId) {
+    if (!isAdmin && course.instructorId !== requesterId) {
       return err(new UnauthorizedError('You can only delete your own courses'));
     }
 

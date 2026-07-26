@@ -173,6 +173,15 @@ export class KeycloakAdminService {
     return res.json() as Promise<KeycloakUser[]>;
   }
 
+  async deleteUser(userId: string): Promise<void> {
+    const res = await this.adminFetch(`/users/${userId}`, { method: 'DELETE' });
+    if (!res.ok && res.status !== 404) {
+      const text = await res.text();
+      this.logger.error(`Delete user failed: ${res.status} — ${text}`);
+      throw new InternalServerErrorException('Failed to delete user');
+    }
+  }
+
   async getUserByEmail(email: string): Promise<KeycloakUser | null> {
     const res = await this.adminFetch(`/users?email=${encodeURIComponent(email)}&exact=true&max=1`);
     if (!res.ok) return null;

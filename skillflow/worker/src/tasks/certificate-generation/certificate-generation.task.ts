@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import nodemailer from 'nodemailer';
 import logger from '../../shared/logger';
+import { PermanentTaskError } from '../../shared/task-error';
 
 export type CertificatePayload = {
   userId: string;
@@ -19,9 +20,23 @@ export type CertificateResult = {
   emailSent: boolean;
 };
 
+function validate(payload: unknown): CertificatePayload {
+  const p = payload as Partial<CertificatePayload> | null;
+  if (
+    !p ||
+    typeof p.userId !== 'string' ||
+    typeof p.courseId !== 'string' ||
+    typeof p.studentEmail !== 'string'
+  ) {
+    // Missing identifiers/recipient — retrying can't fix a malformed request.
+    throw new PermanentTaskError('Invalid certificate-generation payload');
+  }
+  return p as CertificatePayload;
+}
+
 export class CertificateGenerationTask {
   static async execute(payload: unknown): Promise<CertificateResult> {
-    const input = payload as CertificatePayload;
+    const input = validate(payload);
     logger.info({ userId: input.userId, courseId: input.courseId }, 'Generating certificate PDF');
 
     const pdfBuffer = await generatePDF(input);

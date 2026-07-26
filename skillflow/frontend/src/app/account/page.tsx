@@ -105,6 +105,11 @@ export default function AccountPage() {
   const [totpMsg, setTotpMsg] = useState<Msg | null>(null)
   const [totpSaving, setTotpSaving] = useState(false)
 
+  // Delete account state
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteMsg, setDeleteMsg] = useState<Msg | null>(null)
+
   useEffect(() => {
     if (authLoading || !user) return
     apiFetch<Profile>('/auth/profile')
@@ -241,6 +246,19 @@ export default function AccountPage() {
       setTotpMsg({ text: 'Failed to remove 2FA. Please try again.', ok: false })
     } finally {
       setTotpSaving(false)
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true)
+    setDeleteMsg(null)
+    try {
+      await apiFetch('/auth/account', { method: 'DELETE' })
+      // Account gone — end the session and send the user home.
+      logout()
+    } catch {
+      setDeleteMsg({ text: 'Failed to delete account. Please try again.', ok: false })
+      setDeleting(false)
     }
   }
 
@@ -563,6 +581,41 @@ export default function AccountPage() {
             }}
           >
             Sign out of SkillFlow
+          </button>
+        </Card>
+
+        {/* ── Delete account ── */}
+        <Card danger>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--red)', marginBottom: 6 }}>Delete account</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
+            Permanently delete your SkillFlow account and all associated data. This action <strong>cannot be undone</strong>.
+            Type <strong style={{ color: 'var(--red)' }}>DELETE</strong> below to confirm.
+          </p>
+          {deleteMsg && <Alert msg={deleteMsg} />}
+          <input
+            value={deleteConfirm}
+            onChange={e => setDeleteConfirm(e.target.value)}
+            placeholder="Type DELETE to confirm"
+            style={{
+              width: '100%', maxWidth: 260, padding: '9px 12px', marginBottom: 14,
+              border: '1px solid var(--border)', borderRadius: 6, fontSize: 14,
+              color: 'var(--text)', background: 'var(--surface)', boxSizing: 'border-box', display: 'block',
+            }}
+          />
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deleteConfirm !== 'DELETE' || deleting}
+            style={{
+              padding: '10px 20px',
+              background: deleteConfirm === 'DELETE' && !deleting ? 'var(--red)' : 'var(--red-dim)',
+              color: deleteConfirm === 'DELETE' && !deleting ? '#fff' : 'var(--red)',
+              border: '1px solid rgba(220,38,38,0.35)', borderRadius: 6, fontSize: 13, fontWeight: 700,
+              cursor: deleteConfirm === 'DELETE' && !deleting ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            {deleting && <Spinner size={14} />}
+            {deleting ? 'Deleting…' : 'Permanently delete my account'}
           </button>
         </Card>
       </div>

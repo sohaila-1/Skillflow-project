@@ -1,4 +1,5 @@
 import { QuizCorrectionTask, QuizCorrectionPayload } from './quiz-correction.task';
+import { PermanentTaskError } from '../../shared/task-error';
 
 jest.mock('../../shared/logger', () => ({
   __esModule: true,
@@ -122,5 +123,12 @@ describe('QuizCorrectionTask', () => {
     expect(result.score).toBe(70);
     expect(result.total).toBe(10);
     expect(result.passed).toBe(true);
+  });
+
+  it('throws a PermanentTaskError on a malformed payload (non-retryable)', async () => {
+    await expect(QuizCorrectionTask.execute({ submissionId: 'x' })).rejects.toBeInstanceOf(
+      PermanentTaskError,
+    );
+    await expect(QuizCorrectionTask.execute(null)).rejects.toBeInstanceOf(PermanentTaskError);
   });
 });
