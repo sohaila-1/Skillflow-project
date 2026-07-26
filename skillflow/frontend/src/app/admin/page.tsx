@@ -25,8 +25,23 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState<string | null>(null)
   const [error, setError]   = useState('')
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'instructor' | 'learner'>('all')
 
   const isAdmin = user?.roles?.includes('admin')
+
+  const filteredUsers = users.filter(u => {
+    const q = search.trim().toLowerCase()
+    const matchesSearch = !q ||
+      u.username?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      `${u.firstName} ${u.lastName}`.toLowerCase().includes(q)
+    const isLearner = !u.roles.includes('admin') && !u.roles.includes('instructor')
+    const matchesRole =
+      roleFilter === 'all' ||
+      (roleFilter === 'learner' ? isLearner : u.roles.includes(roleFilter))
+    return matchesSearch && matchesRole
+  })
 
   useEffect(() => {
     if (!isAdmin) return
@@ -123,17 +138,55 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Search + role filter */}
+        {!loading && users.length > 0 && (
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: '1 1 240px', minWidth: 200 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search by name, username or email…"
+                style={{ width: '100%', padding: '9px 12px 9px 34px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 14, color: 'var(--text)', background: 'var(--surface)', outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {(['all', 'admin', 'instructor', 'learner'] as const).map(r => (
+                <button
+                  key={r}
+                  onClick={() => setRoleFilter(r)}
+                  style={{
+                    padding: '7px 14px', fontSize: 13, fontWeight: 600, borderRadius: 4, cursor: 'pointer',
+                    border: '1px solid',
+                    ...(roleFilter === r
+                      ? { background: 'var(--accent)', color: '#fff', borderColor: 'var(--accent)' }
+                      : { background: 'var(--surface)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }
+                    ),
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {r === 'all' ? 'All' : r}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Users table */}
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>All Users</div>
-            {!loading && <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{users.length} user{users.length !== 1 ? 's' : ''}</div>}
+            {!loading && <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{filteredUsers.length} of {users.length} user{users.length !== 1 ? 's' : ''}</div>}
           </div>
 
           {loading ? (
             <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>Loading users…</div>
           ) : users.length === 0 ? (
             <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>No users found</div>
+          ) : filteredUsers.length === 0 ? (
+            <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>No users match your search</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -144,7 +197,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => {
+                {filteredUsers.map((u) => {
                   const isMe = u.id === user?.sub
                   const hasAdmin      = u.roles.includes('admin')
                   const hasInstructor = u.roles.includes('instructor')

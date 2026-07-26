@@ -123,8 +123,16 @@ export default function DashboardPage() {
           </Link>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             <Link href="/courses" style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500, textDecoration: 'none' }}>Browse</Link>
-            {(user?.roles ?? []).includes('instructor') && (
+            {((user?.roles ?? []).includes('instructor') || (user?.roles ?? []).includes('admin')) && (
               <Link href="/courses/new" style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>+ Create Course</Link>
+            )}
+            {(user?.roles ?? []).includes('admin') && (
+              <Link href="/admin" style={{ fontSize: 14, color: 'var(--red)', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                Admin
+              </Link>
             )}
             <ThemeToggle />
             <AuthNavActions />

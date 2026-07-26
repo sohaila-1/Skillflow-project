@@ -68,8 +68,9 @@ export default function FeaturedCoursesSection() {
         const free = published.filter(c => !c.isPremium)
         const premium = published.filter(c => c.isPremium)
         const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5)
-        const picks = [...shuffle(free).slice(0, 2), ...shuffle(premium).slice(0, 1)]
-        setCourses(shuffle(picks))
+        const premiumPicks = shuffle(premium).slice(0, 1)
+        const freePicks = shuffle(free).slice(0, 3 - premiumPicks.length)
+        setCourses(shuffle([...freePicks, ...premiumPicks]))
       })
       .catch(() => {})
       .finally(() => setLoading(false))
