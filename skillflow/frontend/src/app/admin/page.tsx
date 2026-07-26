@@ -284,7 +284,7 @@ export default function AdminPage() {
 
         {/* Info box */}
         <div style={{ marginTop: 24, background: 'var(--accent-dim)', border: '1px solid var(--border)', borderRadius: 4, padding: '14px 20px', fontSize: 13, color: 'var(--accent)', lineHeight: 1.7 }}>
-          <strong>Note:</strong> Role changes take effect at the user's next login (when their JWT is refreshed). You can also manage roles directly in the{' '}
+          <strong>Note:</strong> Role changes take effect at the user&apos;s next login (when their JWT is refreshed). You can also manage roles directly in the{' '}
           <strong>Keycloak Admin Console</strong> at <code style={{ background: 'var(--bg-subtle)', padding: '1px 5px', borderRadius: 3, color: 'var(--text)' }}>localhost:8080</code> → Skillflow realm → Users.
         </div>
       </div>
