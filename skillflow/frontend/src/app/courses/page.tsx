@@ -100,6 +100,9 @@ export default function CoursesPage() {
           </Link>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <ThemeToggle />
+            {isAuthenticated && ((user?.roles ?? []).includes('instructor') || (user?.roles ?? []).includes('admin')) && (
+              <Link href="/courses/new" style={{ padding: '7px 16px', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600 }}>+ Create Course</Link>
+            )}
             {isAuthenticated
               ? <Link href="/dashboard" style={{ padding: '7px 16px', background: 'var(--accent)', color: '#fff', borderRadius: 'var(--radius)', fontSize: 13, fontWeight: 600 }}>Dashboard</Link>
               : <>
