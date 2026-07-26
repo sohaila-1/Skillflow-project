@@ -43,7 +43,7 @@ export default function AuthNavActions() {
     const initials = (user.preferred_username ?? user.email ?? '?')
       .charAt(0)
       .toUpperCase()
-    const displayName = user.preferred_username ?? user.email ?? 'Account'
+    const displayName = (user.preferred_username ?? user.email ?? 'Account').split('@')[0]
     const email = user.email ?? ''
     const isAdmin = user.roles?.includes('admin')
 

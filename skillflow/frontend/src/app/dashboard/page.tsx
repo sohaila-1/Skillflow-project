@@ -109,7 +109,7 @@ export default function DashboardPage() {
     return acc + mins
   }, 0)
 
-  const firstName = user?.preferred_username ?? ''
+  const firstName = (user?.preferred_username ?? '').split('@')[0]
 
   return (
     <div style={{ background: 'var(--bg-alt)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
@@ -328,7 +328,7 @@ export default function DashboardPage() {
                   {firstName?.[0]?.toUpperCase() ?? 'U'}
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{user?.preferred_username ?? 'Learner'}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{firstName || 'Learner'}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{user?.email ?? ''}</div>
                 </div>
               </div>

@@ -27,7 +27,7 @@ export default function HomeHero() {
 
   /* ── Authenticated hero ── */
   if (isAuthenticated && user) {
-    const name = user.preferred_username || user.email || 'there'
+    const name = (user.preferred_username || user.email || 'there').split('@')[0]
     const count = enrollments.length
 
     return (
