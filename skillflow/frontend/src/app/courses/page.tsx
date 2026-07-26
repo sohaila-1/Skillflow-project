@@ -27,6 +27,7 @@ const LEVELS = ['All', 'Beginner', 'Intermediate', 'Advanced']
 
 export default function CoursesPage() {
   const { isAuthenticated, user } = useKeycloak()
+  const isAdmin = user?.roles?.includes('admin') ?? false
   const [courses, setCourses]         = useState<Course[]>([])
   const [loading, setLoading]         = useState(true)
   const [search, setSearch]           = useState('')
@@ -214,7 +215,7 @@ export default function CoursesPage() {
                       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{course.description}</p>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 14 }}>{course.level}</div>
                       <div style={{ marginTop: 'auto', display: 'flex', gap: 8 }}>
-                        {course.instructorId === user?.sub ? (
+                        {course.instructorId === user?.sub || isAdmin ? (
                           <>
                             <Link href={`/courses/${course.id}/edit`} style={{
                               flex: 1, padding: '8px', borderRadius: 'var(--radius-sm)', textAlign: 'center',

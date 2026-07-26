@@ -21,16 +21,16 @@ export default function EditCoursePage() {
   const { id } = useParams<{ id: string }>()
   const { isLoading } = useRequireAuth()
 
-  const [form, setForm]         = useState({ title: '', description: '', category: 'General', level: 'Beginner', published: true })
+  const [form, setForm]         = useState({ title: '', description: '', category: 'General', level: 'Beginner', published: true, isPremium: false })
   const [sections, setSections] = useState<Section[]>([emptySection()])
   const [error, setError]       = useState('')
   const [submitting, setSub]    = useState(false)
   const [fetching, setFetching] = useState(true)
 
   useEffect(() => {
-    apiFetch<{ title: string; description: string; category: string; level: string; published: boolean; sections: Section[] }>(`/courses/${id}`)
+    apiFetch<{ title: string; description: string; category: string; level: string; published: boolean; isPremium: boolean; sections: Section[] }>(`/courses/${id}`)
       .then(c => {
-        setForm({ title: c.title, description: c.description, category: c.category, level: c.level, published: c.published })
+        setForm({ title: c.title, description: c.description, category: c.category, level: c.level, published: c.published, isPremium: c.isPremium ?? false })
         setSections(c.sections?.length ? c.sections : [emptySection()])
       })
       .catch(() => setError('Failed to load course'))
@@ -120,9 +120,13 @@ export default function EditCoursePage() {
                 </select>
               </div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 12 }}>
               <input type="checkbox" checked={form.published} onChange={e => setForm(f => ({ ...f, published: e.target.checked }))} style={{ width: 16, height: 16, accentColor: 'var(--accent)' }} />
               <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Published (visible to all learners)</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.isPremium} onChange={e => setForm(f => ({ ...f, isPremium: e.target.checked }))} style={{ width: 16, height: 16, accentColor: '#D97706' }} />
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>👑 Premium course (requires an active subscription to enroll)</span>
             </label>
           </div>
 

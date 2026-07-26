@@ -20,7 +20,7 @@ export default function NewCoursePage() {
   const router = useRouter()
   const { isLoading } = useRequireAuth()
 
-  const [form, setForm]         = useState({ title: '', description: '', category: 'Programming', level: 'Beginner', published: true })
+  const [form, setForm]         = useState({ title: '', description: '', category: 'Programming', level: 'Beginner', published: true, isPremium: false })
   const [sections, setSections] = useState<Section[]>([emptySection()])
   const [error, setError]       = useState('')
   const [submitting, setSub]    = useState(false)
@@ -108,9 +108,13 @@ export default function NewCoursePage() {
                 </select>
               </div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 12 }}>
               <input type="checkbox" checked={form.published} onChange={e => setForm(f => ({ ...f, published: e.target.checked }))} style={{ width: 16, height: 16, accentColor: 'var(--accent)' }} />
               <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Publish immediately (visible to all learners)</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.isPremium} onChange={e => setForm(f => ({ ...f, isPremium: e.target.checked }))} style={{ width: 16, height: 16, accentColor: '#D97706' }} />
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>👑 Premium course (requires an active subscription to enroll)</span>
             </label>
           </div>
 
