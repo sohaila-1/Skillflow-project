@@ -146,7 +146,7 @@ export default async function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
             {CATEGORIES.map(cat => (
               <Link key={cat.label} href="/courses" style={{ textDecoration: 'none' }}>
-                <div style={{ background: 'var(--surface)', border: `1px solid ${cat.border}`, borderRadius: 12, padding: '28px 20px', textAlign: 'center' }}>
+                <div className="card-hover" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '28px 20px', textAlign: 'center', borderTop: `3px solid ${cat.text}` }}>
                   <div style={{ width: 56, height: 56, borderRadius: 14, background: cat.color, border: `1.5px solid ${cat.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }}>
                     {cat.icon}
                   </div>
@@ -226,8 +226,9 @@ export default async function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section style={{ background: '#0056D2', padding: '72px 0', textAlign: 'center' }}>
-        <div className="container" style={{ maxWidth: 560 }}>
+      <section style={{ background: 'linear-gradient(120deg, #0056D2 0%, #0770CE 45%, #0891B2 100%)', padding: '80px 0', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '26px 26px', opacity: 0.4 }} />
+        <div className="container" style={{ maxWidth: 560, position: 'relative' }}>
           <h2 style={{ fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', marginBottom: 16 }}>
             Start learning today
           </h2>

@@ -92,27 +92,71 @@ export default function HomeHero() {
   /* ── Guest hero + How it works ── */
   return (
     <>
-      <section style={{ background: 'var(--bg-alt)', padding: '72px 0 64px', borderBottom: '1px solid var(--border)' }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+      <style>{`
+        @keyframes heroFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .hero-cat { transition: transform .18s ease, box-shadow .18s ease; }
+        .hero-cat:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.12); }
+        .hero-cta-primary { transition: transform .15s ease, box-shadow .15s ease; box-shadow: 0 8px 20px rgba(0,86,210,0.28); }
+        .hero-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,86,210,0.38); }
+        @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr !important; gap: 48px !important; } }
+      `}</style>
+      <section style={{
+        position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--border)',
+        padding: '84px 0 76px',
+        background: 'radial-gradient(circle at 12% 18%, rgba(0,86,210,0.12), transparent 42%), radial-gradient(circle at 88% 32%, rgba(8,145,178,0.12), transparent 46%), radial-gradient(circle at 50% 100%, rgba(124,58,237,0.08), transparent 55%), var(--bg-alt)',
+      }}>
+        {/* Decorative dot grid */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.5,
+          backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+          maskImage: 'radial-gradient(circle at 50% 40%, #000 0%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(circle at 50% 40%, #000 0%, transparent 75%)',
+        }} />
+
+        <div className="container hero-grid" style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1.05fr 1fr', gap: 72, alignItems: 'center' }}>
           <div>
-            <h1 style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'var(--text)', marginBottom: 20 }}>
-              Learn without<br />limits
+            {/* Eyebrow badge */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 100, padding: '6px 14px', marginBottom: 22, boxShadow: 'var(--shadow-sm)' }}>
+              <span style={{ fontSize: 13 }}>✨</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-secondary)' }}>100% free · Certificates included</span>
+            </div>
+
+            <h1 style={{ fontSize: 'clamp(34px, 4.4vw, 58px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: 20 }}>
+              Learn without{' '}
+              <span style={{ background: 'linear-gradient(120deg, #0056D2, #0891B2 60%, #7C3AED)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                limits
+              </span>
             </h1>
-            <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32, maxWidth: 440 }}>
+            <p style={{ fontSize: 17, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 30, maxWidth: 460 }}>
               Start, switch, or advance your career with free online courses from top instructors. Get certificates and build real skills.
             </p>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/auth/register" style={{ padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 32 }}>
+              <Link href="/auth/register" className="hero-cta-primary" style={{ padding: '13px 28px', background: 'var(--accent)', color: '#fff', borderRadius: 8, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
                 Join for Free
               </Link>
-              <Link href="/courses" style={{ padding: '12px 24px', background: 'var(--surface)', color: 'var(--text)', border: '2px solid var(--border)', borderRadius: 4, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
+              <Link href="/courses" style={{ padding: '13px 26px', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
                 Browse Courses
               </Link>
+            </div>
+
+            {/* Trust chips */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              {[
+                { value: '10k+', label: 'learners' },
+                { value: '4.9★', label: 'avg rating' },
+                { value: '100%', label: 'free forever' },
+              ].map(s => (
+                <div key={s.label} style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', fontFamily: 'var(--font-heading)' }}>{s.value}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{s.label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Category showcase */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, animation: 'heroFloat 6s ease-in-out infinite' }}>
             {[
               { icon: '💻', label: 'Programming',     color: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
               { icon: '🌐', label: 'Web Development', color: '#F0FDFA', border: '#99F6E4', text: '#0F766E' },
@@ -122,9 +166,11 @@ export default function HomeHero() {
               { icon: '📚', label: 'General',         color: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' },
             ].map(cat => (
               <Link key={cat.label} href="/courses" style={{ textDecoration: 'none' }}>
-                <div style={{ background: cat.color, border: `1px solid ${cat.border}`, borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                  <span style={{ fontSize: 22 }}>{cat.icon}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: cat.text }}>{cat.label}</span>
+                <div className="hero-cat" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 10, cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: cat.color, border: `1px solid ${cat.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                    {cat.icon}
+                  </div>
+                  <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>{cat.label}</span>
                 </div>
               </Link>
             ))}
