@@ -8,17 +8,6 @@ import {
 } from './domain.error';
 import { ArgumentsHost, HttpStatus } from '@nestjs/common';
 
-function makeHost(status: jest.Mock, json: jest.Mock): ArgumentsHost {
-  return {
-    switchToHttp: () => ({
-      getResponse: () => ({
-        status: (code: number) => ({ json }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any),
-    }),
-  } as unknown as ArgumentsHost;
-}
-
 describe('DomainExceptionFilter', () => {
   let filter: DomainExceptionFilter;
   let jsonMock: jest.Mock;
